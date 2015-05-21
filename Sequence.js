@@ -18,7 +18,7 @@ var Sequence = function (arr) {
             return FilteringSequence;
         };
 
-    return {
+    var seq = {
         next: function () {
             return ++index < arr.length;
         },
@@ -120,7 +120,7 @@ var Sequence = function (arr) {
                 key = keySelector(obj);
                 res[key] = valueSelector(obj, res[key]);
             }
-            return res;
+            return KeyValueSequence(res)();
         },
         sort: function (sorter) {
             var res = this.each().sort(sorter);
@@ -154,7 +154,7 @@ var Sequence = function (arr) {
             _this = predicate ? _this.where(predicate) : this;
             
             if (!_this.next()) {
-                throw "No elements";
+                throw _this.last.throws.empty;
             }
             c = _this.current();
 
@@ -166,26 +166,64 @@ var Sequence = function (arr) {
                 }
             }
         },
+        singleOrDefault : function(predicate,def){
+            var _this = typeof predicate === "function" ? this.where(predicate) : this,
+                undef = {},
+                res = _this.firstOrDefault(predicate,undef);
+            def = (typeof predicate === "function" ? def : predicate) || null;
+            if(res === undef) return def;
+            _this.reset();
+            if(_this.skip(1).any()) throw this.single.throws.tooMany;
+            
+            return res;
+        },
+        single : function(predicate){
+            var undef = {},
+                res = predicate ? this.singleOrDefault(predicate,undef) : this.singleOrDefault(undef);
+
+            if(res === undef) throw this.single.throws.empty;
+            return res;
+        },
         first: function (predicate) {
             var _this;
             this.reset();
             
-            _this = predicate ? this.where(predicate) : this;
+            _this = typeof predicate === "function" ? this.where(predicate) : this;
             if (_this.next()) {
                 return _this.current();
             } else {
-                throw "No elements";
+                throw this.first.throws.empty;
             }
             
         },
+        firstOrDefault: function (predicate, def) {
+            def = (typeof predicate === "function" ? def : predicate) || null;
+            try{
+                return this.first(predicate);
+            } catch (e) {
+                return def;
+            }
+        },
         any: function(predicate){
             try{
-			return this.first(predicate) !== undefined && true;
+			    return this.first(predicate) !== undefined && true;
             } catch (e){
                 return false;
             }
 	    }
     };
+    seq.single.throws = {
+        empty   : "Sequence is empty",
+        tooMany : "Expecting only one element"
+    };
+    seq.singleOrDefault.throws = {
+        tooMany : seq.single.throws.tooMany
+    };
+    seq.first.throws = {
+        empty : seq.single.throws.empty
+    }
+    seq.last.throws = seq.first.throws;
+    return seq;
 },
 RangeSequence = function (start, count, step) {
     step = step || 1;
@@ -255,6 +293,26 @@ TakeSequence = function (_this) {
             };
         ProjectingSequence.prototype = base;
         return ProjectingSequence;
+    }),
+    KeyValueSequence = (function (obj) {
+        var base = Sequence(obj.keys()),
+            KeyValueSequence = function () {
+                this.current = function () {
+                    var key = base.current();
+                    return { key : key, value: obj[key]};
+                };
+            };
+        KeyValueSequence.prototype = base;
+        return function(){
+            var res = new KeyValueSequence(),prop;
+            for(prop in obj){
+                    if(obj.hasOwnProperty(prop)
+                       && !res.hasOwnProperty(prop)){
+                        res[prop] = obj[prop];
+                    }
+            }
+            return res;
+        };
     }),
     SkipSequence = (function (_this) {
         var base = _this,

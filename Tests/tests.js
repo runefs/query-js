@@ -2,9 +2,11 @@ var Sequence = require("../Sequence.js"),
     expect = require("chai").expect;
    
 describe("Sequence",function(){
+    var emptySequence = Sequence([]);
+    
     describe("count",function(){
     it("Counting nothing",function(){
-        expect(Sequence([]).count()).to.equal(0);
+        expect(emptySequence.count()).to.equal(0);
         
     });
     it("Counting",function(){
@@ -17,13 +19,13 @@ describe("Sequence",function(){
     });
     describe("first",function(){
         it("Should throw on empty",function(){
-            var msg = "";
+            var msg = "",seq = emptySequence;
             try{
-              var f = Sequence([]).first();
+              seq.first();
             } catch (e){
               msg = e;    
             }
-            expect(msg).to.equal("No elements");
+            expect(msg).to.equal(seq.first.throws.empty);
         });
     
         it("One and only",function(){
@@ -39,9 +41,33 @@ describe("Sequence",function(){
         });
     });
     
+     describe("firstOrDefault",function(){
+        
+        it("Specific value as default",function(){
+            expect(emptySequence.firstOrDefault(12)).to.equal(12);
+        });
+        it("Specific value as default, predicate",function(){
+            expect(emptySequence.firstOrDefault(function(){return true;},6)).to.equal(6);
+        });
+        it("Null as default",function(){
+            expect(emptySequence.firstOrDefault()).to.equal(null);
+        });
+        
+        it("Compare to first",function(){
+            var verify = function(arr,predicate){
+                     var seq = Sequence(arr);
+                     expect(seq.first(predicate)).to.equal(seq.firstOrDefault(predicate));
+                };
+                verify([2]);
+                verify([2,1,3]);
+                verify([2,1,3],function(e){return e % 2;});
+        });
+        
+     });
+    
     describe("any",function(){
-        it("Should throw on empty",function(){
-            expect(Sequence([]).any()).to.equal(false);
+        it("EMpty",function(){
+            expect(emptySequence.any()).to.equal(false);
         });
     
         it("One and only",function(){
@@ -55,13 +81,13 @@ describe("Sequence",function(){
     
     describe("last",function(){
         it("Should throw on empty",function(){
-            var msg = "";
+            var msg = "", seq = emptySequence;
             try{
-              var f = Sequence([]).last();
+              var f = seq.last();
             } catch (e){
               msg = e;    
             }
-            expect(msg).to.equal("No elements");
+            expect(msg).to.equal(seq.last.throws.empty);
         });
     
         it("One and only",function(){
@@ -161,6 +187,104 @@ describe("Sequence",function(){
             expect(res[2]).to.equal(arr[3]);
             expect(res[3]).to.equal(arr[4]);
             expect(res[4]).to.equal(arr[2]);
+        });
+    });
+    
+    describe("singleOrDefault",function(){
+        
+        it("empty",function(){
+            var undef = {}, seq = emptySequence;
+            expect(emptySequence.singleOrDefault(undef)).to.equal(undef);
+            expect(emptySequence.singleOrDefault(function(){return true;},undef)).to.equal(undef);
+            expect(emptySequence.singleOrDefault(function(){return true;})).to.equal(null);
+            expect(emptySequence.singleOrDefault()).to.equal(null);
+        });
+        
+        it("one",function(){
+            var undef = {};
+            expect(Sequence([1]).singleOrDefault()).to.equal(1);
+            expect(Sequence([1,2]).singleOrDefault(function(e){return e%2;})).to.equal(1);
+            expect(Sequence([1]).singleOrDefault(function(e){return e%2;})).to.equal(1);
+        });
+        
+        it("more than one",function(){
+            var verify = function(arr,predicate){
+                var seq = Sequence(arr);
+                try{
+                   seq.singleOrDefault(predicate);
+                   expect(false).to.equal(true,"should never be executed, an exception was expected");
+                } catch (e){
+                    expect(e.message).to.equal(undefined);
+                    expect(e).to.equal(seq.singleOrDefault.throws.tooMany);
+                }
+            };
+            verify([1,2]);
+            verify([1,2,3],function(e){return e%2;});
+        });
+        
+    });
+    
+    describe("single",function(){
+        var verify = function(seq,message,predicate){
+                try{
+                   seq.single(predicate);
+                   expect(false).to.equal(true, "should never be executed, an exception was expected");
+                } catch (e){
+                   expect(e.message).to.equal(undefined);
+                   expect(e).to.equal(message);
+                }
+            };
+        it("empty",function(){
+            var seq = emptySequence,
+                errMsg = seq.single.throws.empty;
+                
+            verify(seq,errMsg);
+            verify(seq,errMsg,function(e){return e%2;});
+            verify(Sequence([2]),errMsg,function(e){return e%2;});
+        });
+        it("Too many",function(){
+            var seq = Sequence([1,2,3]),
+                errMsg = seq.single.throws.tooMany;
+                
+            verify(seq,errMsg);
+            verify(seq,errMsg,function(e){return e % 2;});
+        }) 
+    });
+    
+    describe("groupBy",function(){
+        it("all same key",function(){
+            var arr = [{index : "a",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
+                seq = Sequence(arr),
+                res = seq.groupBy(function(e){ return e.index});
+            expect(res.a.length).to.equal(arr.length);
+            expect(res.a[1].value).to.equal(1);
+        });
+        
+        it("more keys",function(){
+            var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
+                seq = Sequence(arr),
+                res = seq.groupBy(function(e){ return e.index});
+            expect(res.a.length).to.equal(arr.length - res.b.length);
+            expect(res.b[0].value).to.equal(0);
+            expect(res.a[0].value).to.equal(1);
+        });
+        
+        
+        it("custom value",function(){
+            var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
+                seq = Sequence(arr),
+                res = seq.groupBy(function(e){ return e.index}, function(e,obj){return (obj || 0) + e.value;});
+            expect(res.a).to.equal(3);
+            expect(res.b).to.equal(0);
+        });
+        
+        it("As sequence",function(){
+            var arr = [{index : "b",value : 5},{index : "a",value : 1},{index : "a",value : 2}],
+                seq = Sequence(arr),
+                res = seq.groupBy(function(e){ return e.index});
+            expect(res.single(function(kv){return kv.key ==="b";}).value.single().value).to.equal(5);
+            expect(res.select(function(kv){return kv.value.sum(function(kv){return kv.value;});}).sum()).to.equal(8);
+            expect(res.where(function(kv){return kv.key === "a";}).select(function(kv){return kv.value.sum(function(kv){return kv.value;});}).sum()).to.equal(3);
         });
     });
 });

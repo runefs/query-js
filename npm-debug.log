@@ -1,0 +1,83 @@
+0 info it worked if it ends with ok
+1 verbose cli [ '/home/ubuntu/.nvm/v0.10.35/bin/node',
+1 verbose cli   '/home/ubuntu/.nvm/v0.10.35/bin/npm',
+1 verbose cli   'install',
+1 verbose cli   'Mocha' ]
+2 info using npm@1.4.28
+3 info using node@v0.10.35
+4 verbose cache add [ 'Mocha', null ]
+5 verbose cache add name=undefined spec="Mocha" args=["Mocha",null]
+6 verbose parsed url { protocol: null,
+6 verbose parsed url   slashes: null,
+6 verbose parsed url   auth: null,
+6 verbose parsed url   host: null,
+6 verbose parsed url   port: null,
+6 verbose parsed url   hostname: null,
+6 verbose parsed url   hash: null,
+6 verbose parsed url   search: null,
+6 verbose parsed url   query: null,
+6 verbose parsed url   pathname: 'Mocha',
+6 verbose parsed url   path: 'Mocha',
+6 verbose parsed url   href: 'Mocha' }
+7 silly lockFile 814d5c90-Mocha Mocha
+8 verbose lock Mocha /home/ubuntu/.npm/814d5c90-Mocha.lock
+9 silly lockFile 814d5c90-Mocha Mocha
+10 silly lockFile 814d5c90-Mocha Mocha
+11 verbose addNamed [ 'Mocha', '' ]
+12 verbose addNamed [ null, '*' ]
+13 silly lockFile e8e69631-Mocha Mocha@
+14 verbose lock Mocha@ /home/ubuntu/.npm/e8e69631-Mocha.lock
+15 silly addNameRange { name: 'Mocha', range: '*', hasData: false }
+16 verbose request where is /Mocha
+17 verbose request registry https://registry.npmjs.org/
+18 verbose request id 892e29f36e3cc7d5
+19 verbose url raw /Mocha
+20 verbose url resolving [ 'https://registry.npmjs.org/', './Mocha' ]
+21 verbose url resolved https://registry.npmjs.org/Mocha
+22 verbose request where is https://registry.npmjs.org/Mocha
+23 info trying registry request attempt 1 at 06:22:03
+24 http GET https://registry.npmjs.org/Mocha
+25 http 404 https://registry.npmjs.org/Mocha
+26 verbose headers { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+26 verbose headers   'content-type': 'application/json',
+26 verbose headers   'cache-control': 'max-age=0',
+26 verbose headers   'content-length': '51',
+26 verbose headers   'accept-ranges': 'bytes',
+26 verbose headers   date: 'Thu, 21 May 2015 06:22:03 GMT',
+26 verbose headers   via: '1.1 varnish',
+26 verbose headers   age: '0',
+26 verbose headers   connection: 'keep-alive',
+26 verbose headers   'x-served-by': 'cache-lcy1125-LCY',
+26 verbose headers   'x-cache': 'MISS',
+26 verbose headers   'x-cache-hits': '0',
+26 verbose headers   'x-timer': 'S1432189323.896271,VS0,VE88' }
+27 silly registry.get cb [ 404,
+27 silly registry.get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
+27 silly registry.get     'content-type': 'application/json',
+27 silly registry.get     'cache-control': 'max-age=0',
+27 silly registry.get     'content-length': '51',
+27 silly registry.get     'accept-ranges': 'bytes',
+27 silly registry.get     date: 'Thu, 21 May 2015 06:22:03 GMT',
+27 silly registry.get     via: '1.1 varnish',
+27 silly registry.get     age: '0',
+27 silly registry.get     connection: 'keep-alive',
+27 silly registry.get     'x-served-by': 'cache-lcy1125-LCY',
+27 silly registry.get     'x-cache': 'MISS',
+27 silly registry.get     'x-cache-hits': '0',
+27 silly registry.get     'x-timer': 'S1432189323.896271,VS0,VE88' } ]
+28 silly lockFile e8e69631-Mocha Mocha@
+29 silly lockFile e8e69631-Mocha Mocha@
+30 error 404 404 Not Found: Mocha
+30 error 404
+30 error 404 'Mocha' is not in the npm registry.
+30 error 404 You should bug the author to publish it
+30 error 404
+30 error 404 Note that you can also install from a
+30 error 404 tarball, folder, or http url, or git url.
+31 error System Linux 3.14.13-c9
+32 error command "/home/ubuntu/.nvm/v0.10.35/bin/node" "/home/ubuntu/.nvm/v0.10.35/bin/npm" "install" "Mocha"
+33 error cwd /home/ubuntu/workspace
+34 error node -v v0.10.35
+35 error npm -v 1.4.28
+36 error code E404
+37 verbose exit [ 1, true ]
