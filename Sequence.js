@@ -92,7 +92,9 @@ var Sequence = function (arr) {
             return sum;
         },
         product: function (p) {
-            var product = 0, projection = p || idProjection;
+            var product = 1, projection = p || idProjection;
+            this.reset();
+            if(!this.any()) return 0;
             product = this.aggregate(function (prod, elem) { return prod * projection(elem); }, product);
             return product;
         },
@@ -154,7 +156,7 @@ var Sequence = function (arr) {
             _this = predicate ? _this.where(predicate) : this;
             
             if (!_this.next()) {
-                throw _this.last.throws.empty;
+                throw new Error(_this.last.throws.empty);
             }
             c = _this.current();
 
@@ -173,7 +175,7 @@ var Sequence = function (arr) {
             def = (typeof predicate === "function" ? def : predicate) || null;
             if(res === undef) return def;
             _this.reset();
-            if(_this.skip(1).any()) throw this.single.throws.tooMany;
+            if(_this.skip(1).any()) throw new Error(this.single.throws.tooMany);
             
             return res;
         },
@@ -181,7 +183,7 @@ var Sequence = function (arr) {
             var undef = {},
                 res = predicate ? this.singleOrDefault(predicate,undef) : this.singleOrDefault(undef);
 
-            if(res === undef) throw this.single.throws.empty;
+            if(res === undef) throw new Error(this.single.throws.empty);
             return res;
         },
         first: function (predicate) {
@@ -192,7 +194,7 @@ var Sequence = function (arr) {
             if (_this.next()) {
                 return _this.current();
             } else {
-                throw this.first.throws.empty;
+                throw new Error(this.first.throws.empty);
             }
             
         },

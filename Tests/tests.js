@@ -5,27 +5,21 @@ describe("Sequence",function(){
     var emptySequence = Sequence([]);
     
     describe("count",function(){
-    it("Counting nothing",function(){
-        expect(emptySequence.count()).to.equal(0);
-        
-    });
-    it("Counting",function(){
-        expect(Sequence([1,2,3,4,5]).count()).to.equal(5);
-        
-    });
-    it("Counting with where",function(){
-        expect(Sequence([1,2,3,4,5]).where(function(e){return e % 2;}).count()).to.equal(3);
-    });
+        it("Counting nothing",function(){
+            expect(emptySequence.count()).to.equal(0);
+            
+        });
+        it("Counting",function(){
+            expect(Sequence([1,2,3,4,5]).count()).to.equal(5);
+            
+        });
+        it("Counting with where",function(){
+            expect(Sequence([1,2,3,4,5]).where(function(e){return e % 2;}).count()).to.equal(3);
+        });
     });
     describe("first",function(){
         it("Should throw on empty",function(){
-            var msg = "",seq = emptySequence;
-            try{
-              seq.first();
-            } catch (e){
-              msg = e;    
-            }
-            expect(msg).to.equal(seq.first.throws.empty);
+            expect(function(){emptySequence.first()}).to.throw(emptySequence.first.empty);
         });
     
         it("One and only",function(){
@@ -81,13 +75,7 @@ describe("Sequence",function(){
     
     describe("last",function(){
         it("Should throw on empty",function(){
-            var msg = "", seq = emptySequence;
-            try{
-              var f = seq.last();
-            } catch (e){
-              msg = e;    
-            }
-            expect(msg).to.equal(seq.last.throws.empty);
+            expect(function(){emptySequence.last()}).to.throw(emptySequence.last.empty);
         });
     
         it("One and only",function(){
@@ -210,13 +198,7 @@ describe("Sequence",function(){
         it("more than one",function(){
             var verify = function(arr,predicate){
                 var seq = Sequence(arr);
-                try{
-                   seq.singleOrDefault(predicate);
-                   expect(false).to.equal(true,"should never be executed, an exception was expected");
-                } catch (e){
-                    expect(e.message).to.equal(undefined);
-                    expect(e).to.equal(seq.singleOrDefault.throws.tooMany);
-                }
+                   expect(function(){seq.singleOrDefault(predicate)}).to.throw(seq.singleOrDefault.throws.tooMany);
             };
             verify([1,2]);
             verify([1,2,3],function(e){return e%2;});
@@ -226,13 +208,7 @@ describe("Sequence",function(){
     
     describe("single",function(){
         var verify = function(seq,message,predicate){
-                try{
-                   seq.single(predicate);
-                   expect(false).to.equal(true, "should never be executed, an exception was expected");
-                } catch (e){
-                   expect(e.message).to.equal(undefined);
-                   expect(e).to.equal(message);
-                }
+                expect(function(){seq.single(predicate)}).to.throw(message);
             };
         it("empty",function(){
             var seq = emptySequence,
@@ -287,4 +263,139 @@ describe("Sequence",function(){
             expect(res.where(function(kv){return kv.key === "a";}).select(function(kv){return kv.value.sum(function(kv){return kv.value;});}).sum()).to.equal(3);
         });
     });
+    
+     describe("aggregate",function(){
+        it("empty",function(){
+            var s = {};
+            expect(emptySequence.aggregate(function(seed,e){return seed;},s)).to.equal(s);
+        });
+        it("empty no seed",function(){
+            expect(emptySequence.aggregate(function(seed,e){return seed;})).to.equal(undefined);
+        });
+        
+        it("empty no seed",function(){
+            expect([1,2,3,4,5].aggregate(function(seed,e){return seed + e;},0)).to.equal(15);
+        });
+     });
+     
+     describe("product",function(){
+        it("empty",function(){
+            expect(emptySequence.product()).to.equal(0);
+        });
+        
+        it("simple",function(){
+            expect([1,2,3,4,5].product()).to.equal(120);
+        });
+        
+        it("with projection",function(){
+            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].product(function(e){return e.value;})).to.equal(120);
+        });
+     });
+     
+     describe("sum",function(){
+        it("empty",function(){
+            expect(emptySequence.sum()).to.equal(0);
+        });
+        
+        it("simple",function(){
+            expect([1,2,3,4,5].sum()).to.equal(15);
+        });
+        
+        it("with projection",function(){
+            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].sum(function(e){return e.value;})).to.equal(15);
+        });
+     });
+     
+     describe("take", function(){
+         it("empty", function(){
+             expect(emptySequence.take(1).count()).to.equal(0);
+         });
+         it("taken more than we have", function(){
+             var arr =[1,2,3,4,5], 
+                 res = arr.take(10) 
+             expect(res.count()).to.equal(5);
+         });
+         
+         it("taken less than we have", function(){
+             var arr =[1,2,3,4,5];
+             expect(arr.skip(1).take(1).single()).to.equal(arr[1]);
+         });
+     })
+     
+       describe("min", function(){
+         it("empty", function(){
+             expect(function(){emptySequence.min()}).to.throw(emptySequence.first.throws.empty);
+         });
+         
+         it("one", function(){
+             var elem = 4;
+             expect([elem].min()).to.equal(elem);
+         });
+         
+         it("more", function(){
+             var elem = 4;
+             expect([5,10,elem,5].min()).to.equal(elem);
+         });
+         
+         it("more", function(){
+             var elem = {index:2};
+             expect([elem,{index:5}].min(function(e){return e.index;})).to.equal(elem);
+         });
+         
+         
+       });
+       
+       describe("max", function(){
+         it("empty", function(){
+             expect(function(){emptySequence.max()}).to.throw(emptySequence.first.throws.empty);
+         });
+         
+         it("one", function(){
+             var elem = 4;
+             expect([elem].max()).to.equal(elem);
+         });
+         
+         it("more", function(){
+             var elem = 11;
+             expect([5,10,elem,5].max()).to.equal(elem);
+         });
+         
+         it("more", function(){
+             var elem = {index:11};
+             expect([elem,{index:5}].max(function(e){return e.index;})).to.equal(elem);
+         });
+         
+         
+       });
+       
+       describe("iterate", function(){
+         it("empty", function(){
+             [].iterate(function(){ throw Error("shuold not happen")});
+             expect(true).to.be.true;
+         });
+         
+         it("more", function(){
+             var res = "";
+             [1,4,5].iterate(function(e){res += e });
+             expect(res).to.equal("145");
+         });
+       });
+       
+       describe("select", function(){
+         it("empty", function(){
+             expect(emptySequence.select(function(e){ return e;}).count()).to.equal(0);
+         });
+         it("more", function(){
+             expect([3,4,5].select(function(e){ return e * 10;}).sum()).to.equal(120);
+         });
+       });
+       
+       describe("where", function(){
+         it("empty", function(){
+             expect(emptySequence.where(function(e){ return e;}).count()).to.equal(0);
+         });
+         it("more", function(){
+             expect([3,4,5].where(function(e){ return e % 2;}).sum()).to.equal(8);
+         });
+       });
 });
