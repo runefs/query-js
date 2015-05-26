@@ -1,6 +1,6 @@
 {
   "name": "query-js",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A module that provides sequence operators for arrays (and sequences). It makes projections and filtering etc easy. It was inspired by LINQ from the.NET platform",
   "main": "query.js",
   "dependencies": {

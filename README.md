@@ -13,15 +13,22 @@ Aggregate is what is also known as a left fold. It applies a function to the ele
    ```
    
 ### <a name="all"></a>all ###
-
+Test wheter all elements in a sequence satisfies the given predicate. To be more precise it tests whether there are no elements that doesn't satisfy the predicate (See last example)
 **Example**
    ```JavaScript
+   var arr = [1,2,3,4,5],
+       willBeFalse = arr.all(function(e){return e < 5;}),
+       willBeTrue = arr.all(function(e){return e < 6;});
+       willAlsoBeTrue = [].all(function(e){return false;});
    ```
    
 ### <a name="any"></a>any ###
-
+Test wheter any elements in a sequence satisfies the given predicate
 **Example**
    ```JavaScript
+   var arr = [2,4,6],
+       willBeFalse arr.any(function(e){return e % 2 !== 0;}),
+       willBeTrue arr.any(function(e){return e === 4;});
    ```
    
 ### <a name="count"></a>count ###
