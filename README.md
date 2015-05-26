@@ -27,14 +27,20 @@ Test wheter any elements in a sequence satisfies the given predicate
 **Example**
    ```JavaScript
    var arr = [2,4,6],
-       willBeFalse arr.any(function(e){return e % 2 !== 0;}),
-       willBeTrue arr.any(function(e){return e === 4;});
+       willBeFalse = arr.any(function(e){return e % 2 !== 0;}),
+       willBeTrue = arr.any(function(e){return e === 4;});
    ```
    
 ### <a name="count"></a>count ###
+Returns the count of elements in the sequence
 
 **Example**
    ```JavaScript
+   var arr=[1,2,3],
+       //there's three numbers in the sequence
+       willBeThree = arr.count(),
+       //but only two of the numbers are odd
+       willBeTwo = arr.count(function(e){return e % 2;});
    ```
 ### <a name="current"></a>current ###
 

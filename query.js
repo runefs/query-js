@@ -311,7 +311,7 @@ TakeSequence = function (_this) {
     TakeSequence.prototype = base;
     return TakeSequence;
 },
-    ProjectedSequence = (function (_this) {
+ProjectedSequence = (function (_this) {
         var base = _this,
             ProjectingSequence = function (projection) {
                 projection = projection || function (d) { return d };
@@ -322,7 +322,7 @@ TakeSequence = function (_this) {
         ProjectingSequence.prototype = base;
         return ProjectingSequence;
     }),
-    KeyValueSequence = (function (obj) {
+KeyValueSequence = (function (obj) {
         var base = Sequence(obj.keys()),
             KeyValueSequence = function () {
                 this.current = function () {
@@ -342,7 +342,7 @@ TakeSequence = function (_this) {
             return res;
         };
     }),
-    SkipSequence = (function (_this) {
+SkipSequence = (function (_this) {
         var base = _this,
             SkipSequence = function (count) {
                 var c;
