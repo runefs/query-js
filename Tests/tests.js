@@ -63,7 +63,7 @@ describe("Sequence",function(){
      });
     
     describe("any",function(){
-        it("EMpty",function(){
+        it("Empty",function(){
             expect(emptySequence.any()).to.equal(false);
         });
     
@@ -73,6 +73,29 @@ describe("Sequence",function(){
     
         it("Many more",function(){
             expect(Sequence([false, false]).any()).to.equal(true);
+        });
+    });
+    
+    describe("all",function(){
+        var pred = function(e){return !e};
+        it("Empty",function(){
+            expect(emptySequence.all(pred)).to.equal(true);
+        });
+        
+        it("Empty",function(){
+            expect(function(){emptySequence.all()}).to.throw(emptySequence.all.throws.noPredicate);
+        });
+    
+        it("One and only",function(){
+            expect(Sequence([false]).all(pred)).to.equal(true);
+        });
+    
+        it("Many more",function(){
+            expect(Sequence([false, false, false]).all(pred)).to.equal(true);
+        });
+        
+        it("Not all",function(){
+            expect(Sequence([false, true, false]).all(pred)).to.equal(false);
         });
     });
     
@@ -167,11 +190,11 @@ describe("Sequence",function(){
         });
     });
     
-    describe("sort",function(){
+    describe("orderBy",function(){
         it("simple",function(){
             
             var arr = [1,2,5,3,4],
-                res = Sequence(arr).sort().each();
+                res = Sequence(arr).orderBy().each();
             
             expect(res[0]).to.equal(arr[0]);
             expect(res[1]).to.equal(arr[1]);
@@ -206,6 +229,12 @@ describe("Sequence",function(){
             verify([1,2]);
             verify([1,2,3],function(e){return e%2;});
         });
+        
+         it("None satisfying predicate",function(){
+             var undef = {}
+             expect([1,2,3].singleOrDefault(function(e){return e > 3;},undef)).to.equal(undef);
+             expect([1,2,3].singleOrDefault(function(e){return e > 3;})).to.equal(null);
+         });
         
     });
     
@@ -274,9 +303,10 @@ describe("Sequence",function(){
         });
         it("empty no seed",function(){
             expect(emptySequence.aggregate(function(seed,e){return seed;})).to.equal(undefined);
+            expect(isNaN([1,2,3,4,5].aggregate(function(seed,e){return seed + e;}))).to.equal(true);
         });
         
-        it("empty no seed",function(){
+        it("With seed",function(){
             expect([1,2,3,4,5].aggregate(function(seed,e){return seed + e;},0)).to.equal(15);
         });
      });

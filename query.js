@@ -1,6 +1,7 @@
 console.log("running");
 var Sequence = function (arr) {
-    var index = -1,
+    var undef = {},
+        index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
             var _this = typeof predicate === "function" ? seq.where(predicate) : seq,c;
             def = (typeof predicate === "function" ? def : predicate) || null;
@@ -66,8 +67,7 @@ var Sequence = function (arr) {
         },
         each: function (p) {
             //could return the array directly if there's no predicate
-            //and we have a simple sequence however that would make sort inconsistent
-            //since sort on array mutates the array and sort would then mutate the original array
+            //and we have a simple sequence however currently the filtering sequences would break this
             var projection = p || idProjection,
                 res = [], projected, i = 0;
     	    if (this.__values__){
@@ -130,9 +130,12 @@ var Sequence = function (arr) {
             }
             return KeyValueSequence(res)();
         },
-        sort: function (sorter) {
-            var res = this.each().sort(sorter);
-            return Sequence(res);
+        orderBy: function (sorter) {
+            var arr = [];
+            this.iterate(function(e){arr.push(e);});
+            
+            arr.sort(sorter);
+            return Sequence(arr);
         },
         count : function(p){
             var count = 0,projection = p || function(e){ return e !== undefined;};
@@ -177,15 +180,13 @@ var Sequence = function (arr) {
             }
         },
         last : function(predicate){
-            var undef = {},
-                res = predicate ? this.lastOrDefault(predicate,undef) : this.lastOrDefault(undef);
+            var res = predicate ? this.lastOrDefault(predicate,undef) : this.lastOrDefault(undef);
 
             if(res === undef) throw new Error(this.last.throws.empty);
             return res;
         },
         singleOrDefault : function(predicate,def){
             var _this = typeof predicate === "function" ? this.where(predicate) : this,
-                undef = {},
                 res = _this.firstOrDefault(predicate,undef);
             def = (typeof predicate === "function" ? def : predicate) || null;
             if(res === undef) return def;
@@ -195,8 +196,7 @@ var Sequence = function (arr) {
             return res;
         },
         single : function(predicate){
-            var undef = {},
-                res = predicate ? this.singleOrDefault(predicate,undef) : this.singleOrDefault(undef);
+            var res = predicate ? this.singleOrDefault(predicate,undef) : this.singleOrDefault(undef);
 
             if(res === undef) throw new Error(this.single.throws.empty);
             return res;
@@ -223,10 +223,18 @@ var Sequence = function (arr) {
         },
         any: function(predicate){
             try{
-			    return this.first(predicate) !== undefined && true;
+			    return this.first(predicate, undef) !== undef && true;
             } catch (e){
                 return false;
             }
+	    },
+	    all: function(predicate){
+	        if(!predicate) throw new Error(this.all.throws.noPredicate);
+	        this.reset();
+	        while(this.next()){
+	            if(!predicate(this.current())) return false;
+	        }
+	        return true;
 	    }
     };
     seq.single.throws = {
@@ -240,6 +248,9 @@ var Sequence = function (arr) {
         empty : seq.single.throws.empty
     }
     seq.last.throws = seq.first.throws;
+    seq.all.throws = {
+        noPredicate : "No predicate specified"
+    }
     return seq;
 },
 RangeSequence = function (start, count, step) {
