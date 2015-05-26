@@ -1,4 +1,4 @@
-var Sequence = require("../Sequence.js"),
+var Sequence = require("../query.js"),
     expect = require("chai").expect;
    
 describe("Sequence",function(){
@@ -42,6 +42,9 @@ describe("Sequence",function(){
         });
         it("Specific value as default, predicate",function(){
             expect(emptySequence.firstOrDefault(function(){return true;},6)).to.equal(6);
+        });
+        it("Specific value as default, predicate",function(){
+            expect([1,2,3,4,5].firstOrDefault(function(){return false;},6)).to.equal(6);
         });
         it("Null as default",function(){
             expect(emptySequence.firstOrDefault()).to.equal(null);
