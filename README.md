@@ -9,7 +9,7 @@ Aggregate is what is also known as a left fold. It applies a function to the ele
    ```JavaScript
    var arr = [1,2,3,4,5],
        //will be (0)+1+2+3+4+5 aka 15
-       sum = this.aggregate(function (sum, elem) { return sum + projection(elem); }, 0);
+       sum = this.aggregate(function (sum, elem) { return sum + elem; }, 0);
    ```
    
 ### <a name="all"></a>all ###
