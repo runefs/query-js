@@ -1,6 +1,12 @@
 console.log("running");
 var Sequence = function (arr) {
     var index = -1,
+        getSequqneceAndDefault = function(seq,predicate,def){
+            var _this = typeof predicate === "function" ? seq.where(predicate) : seq,c;
+            def = (typeof predicate === "function" ? def : predicate) || null;
+            return { _this : _this,
+                    def : def };
+        },
         idProjection = function (obj) { return obj; },
         FilteredSequence = function (_this) {
             var base = _this, n,
@@ -150,13 +156,15 @@ var Sequence = function (arr) {
         reverse: function () {
             return this.each().reverse();
         },
-        last: function (predicate) {
-            var c, _this;
-            this.reset();
-            _this = predicate ? _this.where(predicate) : this;
+        lastOrDefault: function (predicate, def) {
+            var seqAndDef = getSequqneceAndDefault(seq, predicate,def), 
+                _this = seqAndDef._this,
+                c = seqAndDef.def;
+            
+            _this.reset();
             
             if (!_this.next()) {
-                throw new Error(_this.last.throws.empty);
+                return c;
             }
             c = _this.current();
 
@@ -167,6 +175,13 @@ var Sequence = function (arr) {
                     return c;
                 }
             }
+        },
+        last : function(predicate){
+            var undef = {},
+                res = predicate ? this.lastOrDefault(predicate,undef) : this.lastOrDefault(undef);
+
+            if(res === undef) throw new Error(this.last.throws.empty);
+            return res;
         },
         singleOrDefault : function(predicate,def){
             var _this = typeof predicate === "function" ? this.where(predicate) : this,
