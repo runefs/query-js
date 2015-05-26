@@ -2,7 +2,7 @@
   "name": "query-js",
   "version": "1.0.0",
   "description": "A module that provides sequence operators for arrays (and sequences). It makes projections and filtering etc easy. It was inspired by LINQ from the.NET platform",
-  "main": "Sequence.js",
+  "main": "query.js",
   "dependencies": {
     "chai": "^2.3.0"
   },
@@ -22,12 +22,13 @@
     "projection",
     "filtering",
     "functional",
-    "array"
+    "array",
+    "query"
   ],
   "author": "Rune Funch Søltoft",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/runefs/Sequence/issues"
+    "url": "https://github.com/runefs/query-js/issues"
   },
-  "homepage": "https://github.com/runefs/Sequence"
+  "homepage": "https://github.com/runefs/query-js"
 }
