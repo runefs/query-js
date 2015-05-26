@@ -28,7 +28,7 @@ Like first but instead of throwing if no elements are found will return a defaul
         defaultValueSpecified = [2,4,6,8].firstOrDefault(function(e){return e % 2;},4);
     ```
 ### <a name="last"></a>last ###
-    Pick the last element of a sequence. If a predicate is specified, the last element that satisfy the predicate is returned. It will throw if the sequence is empty. If that's not warrented then use [lastOrDefault][] instead
+Pick the last element of a sequence. If a predicate is specified, the last element that satisfy the predicate is returned. It will throw if the sequence is empty. If that's not warrented then use [lastOrDefault][] instead
 
 **Example**
    ```JavaScript
@@ -40,7 +40,7 @@ Like first but instead of throwing if no elements are found will return a defaul
    ```
 ### lastOrDefault ###
    
-Works like [link lasat](#last) except that it will return a default value if there are no elements in the sequence that satisfy the predicate
+Works like [last](#last) except that it will return a default value if there are no elements in the sequence that satisfy the predicate
 
 **Example**
    ```JavaScript
