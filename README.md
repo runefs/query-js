@@ -29,6 +29,8 @@ Sequence monkey pathes arrays with a list of operations
     ```
 - last
     Pick the last element of a sequence. If a predicate is specified, the last element that satisfy the predicate is returned
+
+   **Example**
    ```JavaScript
    var arr = [1,2,3];
        //simply get the last element of the sequence
