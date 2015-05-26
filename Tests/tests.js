@@ -194,7 +194,9 @@ describe("Sequence",function(){
         it("simple",function(){
             
             var arr = [1,2,5,3,4],
-                res = Sequence(arr).orderBy().each();
+                res = Sequence(arr).orderBy();
+            console.log(res);
+            res = res.each();
             
             expect(res[0]).to.equal(arr[0]);
             expect(res[1]).to.equal(arr[1]);

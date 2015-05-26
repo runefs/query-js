@@ -1,5 +1,4 @@
-console.log("running");
-var Sequence = function (arr) {
+var Tree, Sequence = function (arr) {
     var undef = {},
         index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
@@ -130,12 +129,9 @@ var Sequence = function (arr) {
             }
             return KeyValueSequence(res)();
         },
-        orderBy: function (sorter) {
-            var arr = [];
-            this.iterate(function(e){arr.push(e);});
-            
-            arr.sort(sorter);
-            return Sequence(arr);
+        orderBy: function (projection) {
+            var res = OrderedSequence(this,projection);
+            return new res();
         },
         count : function(p){
             var count = 0,projection = p || function(e){ return e !== undefined;};
@@ -322,6 +318,26 @@ ProjectedSequence = (function (_this) {
         ProjectingSequence.prototype = base;
         return ProjectingSequence;
     }),
+OrderedSequence = (function(seq, projection){
+        if(Tree === undefined) Tree = require("functional-red-black-tree");
+        var tree = Tree(),
+        current;
+        seq = projection ? seq.select(function(e){ return {key : projection(e), value : e};}) 
+                         : seq.select(function(e){ return {key : e,             value : e};});
+        
+        while(seq.next()){
+            current = seq.current();
+            tree = tree.insert(current.key,current.value);
+        }
+        var base = Sequence(tree.keys),
+            SortedKeySequence = function(){
+                this.current = function(){
+                    return tree.get(base.current());
+                };
+            };
+        SortedKeySequence.prototype = base;
+        return SortedKeySequence;
+}),
 KeyValueSequence = (function (obj) {
         var base = Sequence(obj.keys()),
             KeyValueSequence = function () {
