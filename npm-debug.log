@@ -1,83 +1,108 @@
 0 info it worked if it ends with ok
 1 verbose cli [ '/home/ubuntu/.nvm/v0.10.35/bin/node',
 1 verbose cli   '/home/ubuntu/.nvm/v0.10.35/bin/npm',
-1 verbose cli   'install',
-1 verbose cli   'Mocha' ]
+1 verbose cli   'publish' ]
 2 info using npm@1.4.28
 3 info using node@v0.10.35
-4 verbose cache add [ 'Mocha', null ]
-5 verbose cache add name=undefined spec="Mocha" args=["Mocha",null]
-6 verbose parsed url { protocol: null,
-6 verbose parsed url   slashes: null,
-6 verbose parsed url   auth: null,
-6 verbose parsed url   host: null,
-6 verbose parsed url   port: null,
-6 verbose parsed url   hostname: null,
-6 verbose parsed url   hash: null,
-6 verbose parsed url   search: null,
-6 verbose parsed url   query: null,
-6 verbose parsed url   pathname: 'Mocha',
-6 verbose parsed url   path: 'Mocha',
-6 verbose parsed url   href: 'Mocha' }
-7 silly lockFile 814d5c90-Mocha Mocha
-8 verbose lock Mocha /home/ubuntu/.npm/814d5c90-Mocha.lock
-9 silly lockFile 814d5c90-Mocha Mocha
-10 silly lockFile 814d5c90-Mocha Mocha
-11 verbose addNamed [ 'Mocha', '' ]
-12 verbose addNamed [ null, '*' ]
-13 silly lockFile e8e69631-Mocha Mocha@
-14 verbose lock Mocha@ /home/ubuntu/.npm/e8e69631-Mocha.lock
-15 silly addNameRange { name: 'Mocha', range: '*', hasData: false }
-16 verbose request where is /Mocha
-17 verbose request registry https://registry.npmjs.org/
-18 verbose request id 892e29f36e3cc7d5
-19 verbose url raw /Mocha
-20 verbose url resolving [ 'https://registry.npmjs.org/', './Mocha' ]
-21 verbose url resolved https://registry.npmjs.org/Mocha
-22 verbose request where is https://registry.npmjs.org/Mocha
-23 info trying registry request attempt 1 at 06:22:03
-24 http GET https://registry.npmjs.org/Mocha
-25 http 404 https://registry.npmjs.org/Mocha
-26 verbose headers { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
-26 verbose headers   'content-type': 'application/json',
-26 verbose headers   'cache-control': 'max-age=0',
-26 verbose headers   'content-length': '51',
-26 verbose headers   'accept-ranges': 'bytes',
-26 verbose headers   date: 'Thu, 21 May 2015 06:22:03 GMT',
-26 verbose headers   via: '1.1 varnish',
-26 verbose headers   age: '0',
-26 verbose headers   connection: 'keep-alive',
-26 verbose headers   'x-served-by': 'cache-lcy1125-LCY',
-26 verbose headers   'x-cache': 'MISS',
-26 verbose headers   'x-cache-hits': '0',
-26 verbose headers   'x-timer': 'S1432189323.896271,VS0,VE88' }
-27 silly registry.get cb [ 404,
-27 silly registry.get   { server: 'CouchDB/1.5.0 (Erlang OTP/R16B03)',
-27 silly registry.get     'content-type': 'application/json',
-27 silly registry.get     'cache-control': 'max-age=0',
-27 silly registry.get     'content-length': '51',
-27 silly registry.get     'accept-ranges': 'bytes',
-27 silly registry.get     date: 'Thu, 21 May 2015 06:22:03 GMT',
-27 silly registry.get     via: '1.1 varnish',
-27 silly registry.get     age: '0',
-27 silly registry.get     connection: 'keep-alive',
-27 silly registry.get     'x-served-by': 'cache-lcy1125-LCY',
-27 silly registry.get     'x-cache': 'MISS',
-27 silly registry.get     'x-cache-hits': '0',
-27 silly registry.get     'x-timer': 'S1432189323.896271,VS0,VE88' } ]
-28 silly lockFile e8e69631-Mocha Mocha@
-29 silly lockFile e8e69631-Mocha Mocha@
-30 error 404 404 Not Found: Mocha
-30 error 404
-30 error 404 'Mocha' is not in the npm registry.
-30 error 404 You should bug the author to publish it
-30 error 404
-30 error 404 Note that you can also install from a
-30 error 404 tarball, folder, or http url, or git url.
-31 error System Linux 3.14.13-c9
-32 error command "/home/ubuntu/.nvm/v0.10.35/bin/node" "/home/ubuntu/.nvm/v0.10.35/bin/npm" "install" "Mocha"
-33 error cwd /home/ubuntu/workspace
-34 error node -v v0.10.35
-35 error npm -v 1.4.28
-36 error code E404
-37 verbose exit [ 1, true ]
+4 verbose publish [ '.' ]
+5 verbose cache add [ '.', null ]
+6 verbose cache add name=undefined spec="." args=[".",null]
+7 verbose parsed url { protocol: null,
+7 verbose parsed url   slashes: null,
+7 verbose parsed url   auth: null,
+7 verbose parsed url   host: null,
+7 verbose parsed url   port: null,
+7 verbose parsed url   hostname: null,
+7 verbose parsed url   hash: null,
+7 verbose parsed url   search: null,
+7 verbose parsed url   query: null,
+7 verbose parsed url   pathname: '.',
+7 verbose parsed url   path: '.',
+7 verbose parsed url   href: '.' }
+8 silly lockFile 3a52ce78- .
+9 verbose lock . /home/ubuntu/.npm/3a52ce78-.lock
+10 verbose tar pack [ '/home/ubuntu/.npm/seq/1.0.0/package.tgz', '.' ]
+11 verbose tarball /home/ubuntu/.npm/seq/1.0.0/package.tgz
+12 verbose folder .
+13 info prepublish seq@1.0.0
+14 silly lockFile 1f1177db-tar tar://.
+15 verbose lock tar://. /home/ubuntu/.npm/1f1177db-tar.lock
+16 silly lockFile 87286959-ubuntu-npm-seq-1-0-0-package-tgz tar:///home/ubuntu/.npm/seq/1.0.0/package.tgz
+17 verbose lock tar:///home/ubuntu/.npm/seq/1.0.0/package.tgz /home/ubuntu/.npm/87286959-ubuntu-npm-seq-1-0-0-package-tgz.lock
+18 silly lockFile 1f1177db-tar tar://.
+19 silly lockFile 1f1177db-tar tar://.
+20 silly lockFile 87286959-ubuntu-npm-seq-1-0-0-package-tgz tar:///home/ubuntu/.npm/seq/1.0.0/package.tgz
+21 silly lockFile 87286959-ubuntu-npm-seq-1-0-0-package-tgz tar:///home/ubuntu/.npm/seq/1.0.0/package.tgz
+22 silly lockFile b5c1616d-ome-ubuntu-npm-seq-1-0-0-package /home/ubuntu/.npm/seq/1.0.0/package
+23 verbose lock /home/ubuntu/.npm/seq/1.0.0/package /home/ubuntu/.npm/b5c1616d-ome-ubuntu-npm-seq-1-0-0-package.lock
+24 silly lockFile b5c1616d-ome-ubuntu-npm-seq-1-0-0-package /home/ubuntu/.npm/seq/1.0.0/package
+25 silly lockFile b5c1616d-ome-ubuntu-npm-seq-1-0-0-package /home/ubuntu/.npm/seq/1.0.0/package
+26 silly lockFile 3a52ce78- .
+27 silly lockFile 3a52ce78- .
+28 silly publish { name: 'seq',
+28 silly publish   version: '1.0.0',
+28 silly publish   description: 'A module that provides sequence operators for arrays (and sequences). It makes projections and filtering etc easy. It was inspired by LINQ from the.NET platform',
+28 silly publish   main: 'Sequence.js',
+28 silly publish   dependencies: { chai: '^2.3.0' },
+28 silly publish   devDependencies: { mocha: '^2.2.5' },
+28 silly publish   scripts: { test: 'mocha' },
+28 silly publish   repository: { type: 'git', url: 'https://github.com/runefs/Sequence.git' },
+28 silly publish   keywords:
+28 silly publish    [ 'linq',
+28 silly publish      'sequence',
+28 silly publish      'projection',
+28 silly publish      'filtering',
+28 silly publish      'functional',
+28 silly publish      'array' ],
+28 silly publish   author: { name: 'Rune Funch Søltoft' },
+28 silly publish   license: 'ISC',
+28 silly publish   bugs: { url: 'https://github.com/runefs/Sequence/issues' },
+28 silly publish   homepage: 'https://github.com/runefs/Sequence',
+28 silly publish   readme: 'Sequence is a module that adds sequence operations to JS. It\'s inspired by the operations available in LINQ\nbut is not meant as a port. \n\nSequence monkey pathes arrays with a list of operations\n\n- first\n    Returns the first element of the sequence or if a predicate is provided the first element that meets the criteria\n    if no elements can be found it will throw an exception (See firstOrDefault if this is not warrented)\n- firstOrDefault\n    Like first but instead of throwing if no elements are found will return a default value. null is return as default but a specific value can be passed as a paramter\n- last\n- any\n- select\n- where\n- distinct \n- ...\n \n\n\n',
+28 silly publish   readmeFilename: 'README.md',
+28 silly publish   gitHead: '8c4b75dd3348bfeb2bf2fb61a5bd1708b346259c',
+28 silly publish   _id: 'seq@1.0.0',
+28 silly publish   _shasum: 'dfea553518f6b8985a9e41c610a756a5fafd93b7',
+28 silly publish   _from: '.' }
+29 verbose request where is /seq
+30 verbose request registry https://registry.npmjs.org/
+31 verbose request id c71948a24bc9978f
+32 verbose url raw /seq
+33 verbose url resolving [ 'https://registry.npmjs.org/', './seq' ]
+34 verbose url resolved https://registry.npmjs.org/seq
+35 verbose request where is https://registry.npmjs.org/seq
+36 info trying registry request attempt 1 at 13:58:34
+37 http PUT https://registry.npmjs.org/seq
+38 http 404 https://registry.npmjs.org/seq
+39 verbose headers { 'content-type': 'application/json',
+39 verbose headers   'cache-control': 'max-age=0',
+39 verbose headers   'content-length': '21',
+39 verbose headers   'accept-ranges': 'bytes',
+39 verbose headers   date: 'Sat, 23 May 2015 13:58:36 GMT',
+39 verbose headers   via: '1.1 varnish',
+39 verbose headers   connection: 'keep-alive',
+39 verbose headers   'x-served-by': 'cache-lcy1125-LCY',
+39 verbose headers   'x-cache': 'MISS',
+39 verbose headers   'x-cache-hits': '0',
+39 verbose headers   'x-timer': 'S1432389514.173426,VS0,VE2258' }
+40 error publish Failed PUT 404
+41 error Error: Not found : seq
+41 error     at RegClient.<anonymous> (/home/ubuntu/.nvm/v0.10.35/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:308:14)
+41 error     at Request._callback (/home/ubuntu/.nvm/v0.10.35/lib/node_modules/npm/node_modules/npm-registry-client/lib/request.js:246:65)
+41 error     at Request.self.callback (/home/ubuntu/.nvm/v0.10.35/lib/node_modules/npm/node_modules/request/request.js:236:22)
+41 error     at Request.emit (events.js:98:17)
+41 error     at Request.<anonymous> (/home/ubuntu/.nvm/v0.10.35/lib/node_modules/npm/node_modules/request/request.js:1142:14)
+41 error     at Request.emit (events.js:117:20)
+41 error     at IncomingMessage.<anonymous> (/home/ubuntu/.nvm/v0.10.35/lib/node_modules/npm/node_modules/request/request.js:1096:12)
+41 error     at IncomingMessage.emit (events.js:117:20)
+41 error     at _stream_readable.js:944:16
+41 error     at process._tickCallback (node.js:442:13)
+42 error If you need help, you may report this *entire* log,
+42 error including the npm and node versions, at:
+42 error     <http://github.com/npm/npm/issues>
+43 error System Linux 3.14.13-c9
+44 error command "/home/ubuntu/.nvm/v0.10.35/bin/node" "/home/ubuntu/.nvm/v0.10.35/bin/npm" "publish"
+45 error cwd /home/ubuntu/workspace
+46 error node -v v0.10.35
+47 error npm -v 1.4.28
+48 verbose exit [ 1, true ]
