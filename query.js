@@ -1,16 +1,16 @@
-var Tree, Sequence = function (arr) {
+var Tree, Query = function (arr) {
     var undef = {},
         index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
-            var _this = typeof predicate === "function" ? seq.where(predicate) : seq,c;
+            var _this = typeof predicate === "function" ? seq.where(predicate) : seq;
             def = (typeof predicate === "function" ? def : predicate) || null;
             return { _this : _this,
                     def : def };
         },
         idProjection = function (obj) { return obj; },
-        FilteredSequence = function (_this) {
+        FilteredQuery = function (_this) {
             var base = _this, n,
-                FilteringSequence =
+                FilteringQuery =
                 function (predicate) {
                     predicate = predicate || function () { return true; };
                     this.next = function () {
@@ -20,8 +20,8 @@ var Tree, Sequence = function (arr) {
                         return n;
                     };
                 };
-            FilteringSequence.prototype = base;
-            return FilteringSequence;
+            FilteringQuery.prototype = base;
+            return FilteringQuery;
         };
 
     var seq = {
@@ -35,12 +35,12 @@ var Tree, Sequence = function (arr) {
             index = -1;
         },
         where: function (predicate) {
-            var res = FilteredSequence(this);
+            var res = FilteredQuery(this);
             res.prototype = this;
             return new res(predicate);
         },
         select: function (projection) {
-            var res = ProjectedSequence(this);
+            var res = ProjectedQuery(this);
             return new res(projection);
         },
 	    iterate: function(p){
@@ -66,9 +66,10 @@ var Tree, Sequence = function (arr) {
         },
         each: function (p) {
             //could return the array directly if there's no predicate
-            //and we have a simple sequence however currently the filtering sequences would break this
+            //and we have a simple Query however currently the filtering Querys would break this
             var projection = p || idProjection,
-                res = [], projected, i = 0;
+                res = [], 
+                projected;
     	    if (this.__values__){
     		    if(this.__values__[p]) {
     		        return this.__values__[p];
@@ -78,17 +79,17 @@ var Tree, Sequence = function (arr) {
     	    }
             this.reset();
             while (this.next()) {
-                projected = projection(this.current(), index)
+                projected = projection(this.current(), index);
                 res.push(projected);
             }
             return this.__values__[p] = res;
         },
         skip: function (count) {
-            var res = SkipSequence(this, function (i) { index = i; });
+            var res = SkipQuery(this, function (i) { index = i; });
             return new res(count);
         },
         take: function (count) {
-            var res = TakeSequence(this);
+            var res = TakeQuery(this);
             return new res(count);
         },
         sum: function (p) {
@@ -123,10 +124,10 @@ var Tree, Sequence = function (arr) {
                 }
                 res[key].push(valueSelector(obj));
             }
-            return KeyValueSequence(res)();
+            return KeyValueQuery(res)();
         },
         orderBy: function (projection) {
-            var res = OrderedSequence(this,projection);
+            var res = OrderedQuery(this,projection);
             return new res();
         },
         count : function(p){
@@ -230,7 +231,7 @@ var Tree, Sequence = function (arr) {
 	    }
     };
     seq.single.throws = {
-        empty   : "Sequence is empty",
+        empty   : "Query is empty",
         tooMany : "Expecting only one element"
     };
     seq.singleOrDefault.throws = {
@@ -238,16 +239,16 @@ var Tree, Sequence = function (arr) {
     };
     seq.first.throws = {
         empty : seq.single.throws.empty
-    }
+    };
     seq.last.throws = seq.first.throws;
     seq.all.throws = {
         noPredicate : "No predicate specified"
-    }
+    };
     return seq;
 },
-RangeSequence = function (start, count, step) {
+RangeQuery = function (start, count, step) {
     step = step || 1;
-    var base = new Sequence(),
+    var base = new Query(),
         ctor = function () {
             var current, c;
 
@@ -274,7 +275,7 @@ RangeSequence = function (start, count, step) {
 		return true;
             };
             this.skip = function (count) {
-                var res = SkipSequence(this, function (i) {
+                var res = SkipQuery(this, function (i) {
                     c -= i;
                     current += step * i + start;
                 });
@@ -287,9 +288,9 @@ RangeSequence = function (start, count, step) {
     ctor.prototype = base;
     return ctor;
 },
-TakeSequence = function (_this) {
+TakeQuery = function (_this) {
     var base = _this,
-        TakeSequence =
+        TakeQuery =
         function (count) {
             var c = count;
             this.next = function () {
@@ -300,21 +301,21 @@ TakeSequence = function (_this) {
                 c = count;
             };
         };
-    TakeSequence.prototype = base;
-    return TakeSequence;
+    TakeQuery.prototype = base;
+    return TakeQuery;
 },
-ProjectedSequence = (function (_this) {
+ProjectedQuery = (function (_this) {
         var base = _this,
-            ProjectingSequence = function (projection) {
+            ProjectingQuery = function (projection) {
                 projection = projection || function (d) { return d };
                 this.current = function () {
                     return projection(base.current());
                 };
             };
-        ProjectingSequence.prototype = base;
-        return ProjectingSequence;
+        ProjectingQuery.prototype = base;
+        return ProjectingQuery;
     }),
-OrderedSequence = (function(seq, projection){
+OrderedQuery = (function(seq, projection){
         if(Tree === undefined) Tree = require("functional-red-black-tree");
         var tree = Tree(),
         current;
@@ -325,26 +326,26 @@ OrderedSequence = (function(seq, projection){
             current = seq.current();
             tree = tree.insert(current.key,current.value);
         }
-        var base = Sequence(tree.keys),
-            SortedKeySequence = function(){
+        var base = Query(tree.keys),
+            SortedKeyQuery = function(){
                 this.current = function(){
                     return tree.get(base.current());
                 };
             };
-        SortedKeySequence.prototype = base;
-        return SortedKeySequence;
+        SortedKeyQuery.prototype = base;
+        return SortedKeyQuery;
 }),
-KeyValueSequence = (function (obj) {
-        var base = Sequence(obj.keys()),
-            KeyValueSequence = function () {
+KeyValueQuery = (function (obj) {
+        var base = Query(obj.keys()),
+            KeyValueQuery = function () {
                 this.current = function () {
                     var key = base.current();
                     return { key : key, value: obj[key]};
                 };
             };
-        KeyValueSequence.prototype = base;
+        KeyValueQuery.prototype = base;
         return function(){
-            var res = new KeyValueSequence(),prop;
+            var res = new KeyValueQuery(),prop;
             for(prop in obj){
                     if(obj.hasOwnProperty(prop)
                        && !res.hasOwnProperty(prop)){
@@ -354,9 +355,9 @@ KeyValueSequence = (function (obj) {
             return res;
         };
     }),
-SkipSequence = (function (_this) {
+SkipQuery = (function (_this) {
         var base = _this,
-            SkipSequence = function (count) {
+            SkipQuery = function (count) {
                 var c;
                 this.reset = function () {
                     c = count;
@@ -370,32 +371,32 @@ SkipSequence = (function (_this) {
                 };
                 this.reset();
             };
-        SkipSequence.prototype = base;
-        return SkipSequence;
+        SkipQuery.prototype = base;
+        return SkipQuery;
     });
-Sequence.patch = function (proto) {
-    var f, it = new Sequence([]);
+Query.patch = function (proto) {
+    var f, it = new Query([]);
     for (f in it) {
         if (it.hasOwnProperty(f) && !proto.hasOwnProperty(f)) {
             (function (f) {
                 proto[f] = function () {
-                    var it = Sequence(this);
+                    var it = Query(this);
                     return it[f].apply(it, arguments);
                 };
             })(f);
         }
     }
 
-    Sequence.range = function (start, count, step) {
-        var rangeSequence = RangeSequence(start, count, step);
-        return new rangeSequence();
+    Query.range = function (start, count, step) {
+        var rangeQuery = RangeQuery(start, count, step);
+        return new rangeQuery();
     };
     return proto;
 };
-Sequence.patch(Array.prototype);
-Sequence.generate = function(generator, seed){
+Query.patch(Array.prototype);
+Query.generate = function(generator, seed){
     var arr = [],
-        SequenceGenerator = (function (_this) {
+        QueryGenerator = (function (_this) {
 	    var sg = function (generator) {
     		var _current = seed;
     		this.next = function(){
@@ -409,8 +410,8 @@ Sequence.generate = function(generator, seed){
 	    };
 	    sg.prototype = _this;
 	    return sg;
-    })(new Sequence(arr));
-    return new SequenceGenerator(generator);
+    })(new Query(arr));
+    return new QueryGenerator(generator);
 };
 Object.prototype.keys = function(){ 
     var res = []; 
@@ -422,4 +423,4 @@ Object.prototype.keys = function(){
  return res;
 };
 
-module.exports = function(arr){ return Sequence(arr);};
+module.exports = function(arr){ return Query(arr);};
