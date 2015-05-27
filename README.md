@@ -9,7 +9,7 @@ Aggregate is what is also known as a left fold. It applies a function to the ele
    ```JavaScript
    var arr = [1,2,3,4,5],
        //will be (0)+1+2+3+4+5 aka 15
-       sum = this.aggregate(function (sum, elem) { return sum + elem; }, 0);
+       sum = arr.aggregate(function (sum, elem) { return sum + elem; }, 0);
    ```
    
 ### <a name="all"></a>all ###
@@ -43,15 +43,18 @@ Returns the count of elements in the sequence
        willBeTwo = arr.count(function(e){return e % 2;});
    ```
 ### <a name="current"></a>current ###
-
+Returns the current element in the sequence. Should generally not be used and might very well be removed from the API in a future release
 **Example**
    ```JavaScript
    ```
 
 ### <a name="distinct"></a>distinct ###
-
+Filters out all duplicates, if no comparer is passed then a simple comparison is used. If custom comparison is required a compare can be passed
 **Example**
    ```JavaScript
+   //will be an array [1,2,3,4,5]
+   var res = [1,1,2,2,3,3,4,4,5,5].distinct();
+   res = [{index : 1, value : 4}, {index : 4, value : 4},{index : 2, value : 3}].distinct(function(a,b){ return a.index === b.index });
    ```
 
 ### <a name="each"></a>each ###
@@ -65,26 +68,27 @@ Returns the first element of the sequence or if a predicate is provided the firs
 if no elements can be found it will throw an exception (See [firstOrDefault](#firstOrDefault) if this is not warrented)
 
 **Example**
-    ```JavaScript
+```JavaScript
     var arr = [2,3,4];
          //simply get the list element in the sequence
          willBeTwo = arr.first();
          //get the first element, that satisfy the predicate
          willBeThree = arr.first(function(e){ return e % 2; });
-    ```
+```
     
 ### <a name="firstOrDefault"></a>firstOrDefault ###
 Like [first](#first) but instead of throwing if no elements are found will return a default value. null is returned as default but a specific value can be passed as a paramter
     
 **Example**
-    ```JavaScript
+
+ ```JavaScript
     var //will be null
         defaultValue = [].firstOrDefault();
         //will be 4
         defaultValueSpecified = [].firstOrDefault(4);
         //With predicate
         defaultValueSpecified = [2,4,6,8].firstOrDefault(function(e){return e % 2;},4);
-    ```
+```
     
 ### <a name="groupBy"></a>groupBy ###
 
@@ -101,7 +105,7 @@ Like [first](#first) but instead of throwing if no elements are found will retur
 Pick the last element of a sequence. If a predicate is specified, the last element that satisfy the predicate is returned. It will throw if the sequence is empty. If that's not warrented then use [lastOrDefault](#lastOrDefault) instead
 
 **Example**
-   ```JavaScript
+```JavaScript
    var arr = [1,2,3,4];
        //simply get the last element of the sequence
        willBeFour = arr.last();
@@ -113,13 +117,13 @@ Pick the last element of a sequence. If a predicate is specified, the last eleme
 Works like [last](#last) except that it will return a default value if there are no elements in the sequence that satisfy the predicate
 
 **Example**
-   ```JavaScript
+```JavaScript
    var arr = [1,2,3,4];
        //simply get the last element of the sequence
        willBeFour = arr.last();
        //get the last element that satisfy the predicate
        wiilBeThree = arr.last(function(e){ return e % 2;});
-   ```
+```
    
 
 ### <a name="max"></a>max ###

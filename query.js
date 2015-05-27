@@ -113,19 +113,15 @@ var Tree, Sequence = function (arr) {
         },
         groupBy: function (keySelector, valueSelector) {
             var res = {}, key, obj;
-            valueSelector = valueSelector || (function (obj, value) {
-                if (!value) {
-                    return [obj];
-                } else {
-                    value.push(obj);
-                    return value;
-                }
-            });
+            valueSelector = valueSelector || function (obj) {return obj;};
             this.reset();
             while (this.next()) {
                 obj = this.current();
                 key = keySelector(obj);
-                res[key] = valueSelector(obj, res[key]);
+                if(!res.hasOwnProperty(key)){
+                    res[key] = [];
+                }
+                res[key].push(valueSelector(obj));
             }
             return KeyValueSequence(res)();
         },
