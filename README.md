@@ -100,7 +100,11 @@ groupBy groups the sequence based on a key for each element. The result can be t
 Yopu can pass a second function which can be use to project the value of the element into a new element
 **Example**
 ```JavaScript
-   var arr = [{name:"John", age:"Middel"}, {name:"Peter", age:"young"}, {name:"Jack", age:"Old"},{name:"Christine", age:"young"},{name."Juliet", age : "Middel"}];
+   var arr = [{name:"John", age:"Middel"}, 
+              {name:"Peter", age:"young"}, 
+              {name:"Jack", age:"Old"},
+              {name:"Christine", age:"young"},
+              {name."Juliet", age : "Middel"}];
        //{
        //  "Middel" : [{name:"John", age:"Middel"},{name."Juliet", age : "Middel"}],
        //  "young"  : [{name:"Peter", age:"young"},{name:"Christine", age:"young"}],
@@ -172,7 +176,7 @@ Move the iteration to the next ele in the sequence. This is meant for internal u
 ### <a name="orderBy"></a>orderBy ###
 orderBy sorts the sequence of elements. If no projection is provided then simple comparison of the individual elements is used.
 **Example**
-   ```JavaScript
+```JavaScript
    var arr = [1,4,2,5,3],
        //will be [1,2,3,4,5]
        res = arr.orderBy()
@@ -181,28 +185,40 @@ orderBy sorts the sequence of elements. If no projection is provided then simple
    ```
 
 ### <a name="product"></a>product ###
-
+Will take the product of all the elements
 **Example**
-   ```JavaScript
+```JavaScript
+   var arr [1,2,3,4,5]
+       //will be 120 (1*2*3*4*5)
+       res = arr.product();
+       //will also be 120
+       res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].product(function(e){return e.value;});
    ```
 
 
 ### <a name="reset"></a>reset ###
+Will restart the iteration of the sequence. Is meant for internal use an should generally not be used
 **Example**
    ```JavaScript
    ```
    
 ### <a name="reverse"></a>reverse ###
-
+Reverses the sequence
 **Example**
-   ```JavaScript
+```JavaScript
+   var arr = [1,2,3,4],
+       //will be [4,3,2,1]
+       res = arr.reverse();
    ```
 
 
 ### <a name="select"></a>select ###
-
+This method lets you project the elements of sequence into a sequence of new values
 **Example**
-   ```JavaScript
+```JavaScript
+   var arr = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}],
+       //will be [1,2,3,4,5]
+       res = arr.select(function(e){return e.value;})
    ```
 
 ### <a name="single"></a>single ###
@@ -236,23 +252,46 @@ Just like [single](#single), if multiple elements are present an exception will 
        willReturnTheDefaultOfFour = arr.singleOrDefault(function(e){ return e > 3;},4);
    ```
 ### <a name="skip"></a>skip ###
-
+Skip a number of elements
 **Example**
-   ```JavaScript
+```JavaScript
+    var arr = [1,2,3,4,5],
+        //we be [2,3,4,5]
+        res = arr.skip(1).each();
    ```   
 ### <a name="sum"></a>sum ###
-
+Sums up the elements of the sequence
 **Example**
-   ```JavaScript
+```JavaScript
+    var arr = [1,2,3,4,5]
+        //will be 15
+        res = arr.sum();
+        //will also be 15
+        res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].sum(function(e){return e.value;});
    ```
 ### <a name="take"></a>take ###
+Takes a number of elements
 
 **Example**
-   ```JavaScript
+```JavaScript
+    var arr = [1,2,3,4,5],
+        //will be [1,2,3]
+        res = arr.take(3).each();
+   ```
+### <a name="when"></a>where ###
+Takes elements from the sequence as long as the predicate is satisfied
+**Example**
+```JavaScript
+    var arr = [1,2,3,4,5],
+        //will be [1,3,5]
+        res = arr.where(function(e){ return e < 4; });
    ```
    
 ### <a name="where"></a>where ###
-
+Filters the sequence based on a predicate
 **Example**
-   ```JavaScript
+```JavaScript
+    var arr = [1,2,3,4,5],
+        //will be [1,3,5]
+        res = arr.where(function(e){ return e % 2; });
    ```

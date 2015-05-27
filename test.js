@@ -162,6 +162,19 @@ describe("Query",function(){
         })
     });
     
+    describe("when",function(){
+        
+        it("Simple",function(){
+            
+            var arr = [1,3,2,4,5],
+                res = arr.when(function(e){return e < 4;}).each();
+            expect(res.length).to.equal(3);
+            expect(res[0]).to.equal(arr[0]);
+            expect(res[1]).to.equal(arr[1]);
+            expect(res[2]).to.equal(arr[2]);
+        })
+    });
+    
     describe("distinct",function(){
         it("one",function(){
             

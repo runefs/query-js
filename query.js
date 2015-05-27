@@ -222,6 +222,10 @@ var Tree, Query = function (arr) {
                 return false;
             }
 	    },
+	    when: function(predicate){
+            var res = WhenQuery(this);
+            return new res(predicate);
+	    },
 	    all: function(predicate){
 	        if(!predicate) throw new Error(this.all.throws.noPredicate);
 	        this.reset();
@@ -315,7 +319,17 @@ ProjectedQuery = (function (_this) {
             };
         ProjectingQuery.prototype = base;
         return ProjectingQuery;
-    }),
+}),
+WhenQuery = (function (_this) {
+        var base = _this,
+            WhenQuery = function (predicate) {
+                this.next = function () {
+                    return base.next() && predicate(base.current());
+                };
+            };
+        WhenQuery.prototype = base;
+        return WhenQuery;
+}),
 OrderedQuery = (function(seq, projection){
         if(Tree === undefined) Tree = require("functional-red-black-tree");
         var tree = Tree(),
