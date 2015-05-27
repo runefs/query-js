@@ -44,9 +44,6 @@ Returns the count of elements in the sequence
    ```
 ### <a name="current"></a>current ###
 Returns the current element in the sequence. Should generally not be used and might very well be removed from the API in a future release
-**Example**
-   ```JavaScript
-   ```
 
 ### <a name="distinct"></a>distinct ###
 Filters out all duplicates, if no comparer is passed then a simple comparison is used. If custom comparison is required a compare can be passed
@@ -169,9 +166,7 @@ Returns the minimal value of the sequence. The method accepts a function for pro
 
 ### <a name="next"></a>next ###
 Move the iteration to the next ele in the sequence. This is meant for internal use and should generally not be used
-**Example**
-   ```JavaScript
-   ```
+
 
 ### <a name="orderBy"></a>orderBy ###
 orderBy sorts the sequence of elements. If no projection is provided then simple comparison of the individual elements is used.
@@ -198,10 +193,7 @@ Will take the product of all the elements
 
 ### <a name="reset"></a>reset ###
 Will restart the iteration of the sequence. Is meant for internal use an should generally not be used
-**Example**
-   ```JavaScript
-   ```
-   
+
 ### <a name="reverse"></a>reverse ###
 Reverses the sequence
 **Example**
