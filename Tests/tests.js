@@ -169,6 +169,12 @@ describe("Sequence",function(){
             expect(res[0]).to.equal(1);
         });
         
+        if("Custom  comparison", function(a,b){
+            var first = {index : 1, value : 4},
+                res = [first, {index : 4, value : 4},{index : 2, value : 3}].distinct(function(a,b){ return a.index === b.index }).each();
+            expect(res[0]).to.equal(first);
+        })
+        
         it("all the same",function(){
             
             var arr = [1,1,1],
