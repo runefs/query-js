@@ -66,7 +66,8 @@ var Tree, Query = function (arr) {
         },
         each: function (p) {
             //could return the array directly if there's no predicate
-            //and we have a simple Query however currently the filtering Querys would break this
+            //and we have a simple Query. This would require that all Query types that provide 
+            //an implementation of current should also provide an implementation of each
             var projection = p || idProjection,
                 res = [], 
                 projected;

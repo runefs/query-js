@@ -1,5 +1,5 @@
 Query-js is a module, that adds sequence operations to javascript. It's inspired by the operations available in LINQ,
-but is not meant as a port.
+but is not meant as a port. The methods are generally evaluating lazily when possible.
 
 ### <a name="aggregate"></a>aggregate ###
 Aggregate is what is also known as a left fold. It applies a function to the element one at a time and passes the result onto the next iteration. If you do not provide a seed undefined is used as seed
@@ -58,10 +58,15 @@ Filters out all duplicates, if no comparer is passed then a simple comparison is
    ```
 
 ### <a name="each"></a>each ###
-
+Is very similar to [select](#select) but instead of returning a lazily evaluated sequence it's evaluated upfront and returned in an array
 **Example**
-   ```JavaScript
-   ```
+```JavaScript
+   var seq = Sequence([1,2,3,4,5]).where(function(e){return e % 2;}),
+       //[1,3,5]
+       arr = seq.each();
+       //[1,9,25]
+       arr = seq.each(function(e){return e * e;});
+```
    
 ### <a name="first"></a>first ###
 Returns the first element of the sequence or if a predicate is provided the first element that meets the criteria
@@ -91,15 +96,26 @@ Like [first](#first) but instead of throwing if no elements are found will retur
 ```
     
 ### <a name="groupBy"></a>groupBy ###
-
+groupBy groups the sequence based on a key for each element. The result can be treated like any other JS object or you can chain additional query operators to the result, treating it as a sequence of key-value pairs
+Yopu can pass a second function which can be use to project the value of the element into a new element
 **Example**
-   ```JavaScript
+```JavaScript
+   var arr = [{name:"John", age:"Middel"}, {name:"Peter", age:"young"}, {name:"Jack", age:"Old"},{name:"Christine", age:"young"},{name."Juliet", age : "Middel"}];
+       //{
+       //  "Middel" : [{name:"John", age:"Middel"},{name."Juliet", age : "Middel"}],
+       //  "young"  : [{name:"Peter", age:"young"},{name:"Christine", age:"young"}],
+       //  "Old"    : [{name:"Jack", age:"Old"}]
+       //}
+       ageGroups = arr.groupBy(function(e){return e.age;})
    ```
 
 ### <a name="iterate"></a>iterate ###
+Iterate does exactly want the name implies. It iterates over the sequence of elements. Passing each element to the function as a parameter.
 
 **Example**
-   ```JavaScript
+```JavaScript
+   // prints 1 2 3 to the console
+   [1,2,3].iterates(console.log);
    ```
 ### <a name="last"></a>last ###
 Pick the last element of a sequence. If a predicate is specified, the last element that satisfy the predicate is returned. It will throw if the sequence is empty. If that's not warrented then use [lastOrDefault](#lastOrDefault) instead
@@ -127,26 +143,41 @@ Works like [last](#last) except that it will return a default value if there are
    
 
 ### <a name="max"></a>max ###
-
+Returns the maximal value of the sequence. The method accepts a function as the only argument. If a projection is provided the elements will be projected before compared
 **Example**
    ```JavaScript
+   var arr = [{index : 1, value 4},{index : 2, value : 3}];
+       //will be {index : 1, value 4}
+       max = arr.max(function(e){return e.value;});
+       //will be 5
+       max = [1,3,5,4,2].max();
    ```
 ### <a name="min"></a>min ###
-
+Returns the minimal value of the sequence. The method accepts a function for projection of the elements, as the only argument. If a projection is provided the elements will be projected before compared
 **Example**
    ```JavaScript
+   var arr = [{index : 1, value 4},{index : 2, value : 3}];
+       //will be {index : 2, value 3}
+       min = arr.min(function(e){return e.value;});
+       //will be 1
+       max = [1,3,5,4,2].min();
    ```
 
 ### <a name="next"></a>next ###
-
+Move the iteration to the next ele in the sequence. This is meant for internal use and should generally not be used
 **Example**
    ```JavaScript
    ```
 
 ### <a name="orderBy"></a>orderBy ###
-
+orderBy sorts the sequence of elements. If no projection is provided then simple comparison of the individual elements is used.
 **Example**
    ```JavaScript
+   var arr = [1,4,2,5,3],
+       //will be [1,2,3,4,5]
+       res = arr.orderBy()
+       //will be [{index:0,count: 4},{index : 1, count : 3},{index : 2, count : 2}]
+       res = [{index:1,count: 3},{index : 0, count : 4},{index : 2, count : 2}].orderBy(function(e){return e.index;});
    ```
 
 ### <a name="product"></a>product ###
