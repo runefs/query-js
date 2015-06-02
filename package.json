@@ -4,11 +4,13 @@
   "description": "Sequence operations for JavaScript",
   "main": "query.js",
   "dependencies": {
-    "chai": "^2.3.0",
+    
     "functional-red-black-tree": "^1.0.1"
   },
   "devDependencies": {
-    "mocha": "^2.2.5"
+    "chai": "^2.3.0",
+    "mocha": "^2.2.5",
+    "request": "^2.55.0"
   },
   "scripts": {
     "test": "mocha"

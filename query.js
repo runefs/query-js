@@ -1,4 +1,4 @@
-var Tree, Query = function (arr) {
+var Tree, week, Query = function (arr) {
     var undef = {},
         index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
@@ -112,6 +112,31 @@ var Tree, Query = function (arr) {
                 state = folder(state, this.current());
             }
             return state;
+        },
+        average : function(p){
+            var count = 0, 
+                sum = 0, 
+                _this = p ? this.select(p) : this;
+            
+            
+            _this.reset();
+            if(!_this.next()) return undefined;
+            do { 
+                count++;
+                sum += _this.current();
+            }
+            while(_this.next());
+            return sum/count;
+        },
+        concatenate : function(localProjection, elementProjection){
+          var res = concatenateenationQuery(this);
+          if (arguments.length === 0){
+             return new res();
+          } else if (arguments.length === 1){
+             return new res(localProjection);
+          } else {
+              return new res(localProjection, elementProjection);
+          }
         },
         groupBy: function (keySelector, valueSelector) {
             var res = {}, key, obj;
@@ -311,14 +336,52 @@ TakeQuery = function (_this) {
 },
 ProjectedQuery = (function (_this) {
         var base = _this,
-            ProjectingQuery = function (projection) {
-                projection = projection || function (d) { return d };
+            ProjectingQuery = function (p) {
+                p = p || function (d) { return d };
+                var projection = typeof p === "function" 
+                                 ? p
+                                 : function(e){ return e[p];};
                 this.current = function () {
                     return projection(base.current());
                 };
             };
         ProjectingQuery.prototype = base;
         return ProjectingQuery;
+}),
+concatenateenationQuery = (function(_this){
+    var base = _this,
+    concatenateenationQuery = function(localProjection, elementProjection){
+           var sequences = arguments.length > 1  ? base.select(localProjection) : base,
+               sequence;
+               if(arguments.length === 1){
+                   elementProjection = localProjection;
+                   localProjection = undefined;
+               }
+               if(!sequences.next()){
+                   return Query([]);
+               } else{
+                   sequence = sequences.current()
+                   sequence.reset();
+               }
+               
+        this.next = function(){
+           while(!sequence.next()) {
+               if(sequences.next()){
+                   sequence = sequences.current();
+                   sequence.reset();
+                   sequence = elementProjection ? sequence.select(elementProjection) : sequence;
+               } else{
+                   return false;
+               }
+           }
+           return true;
+        };
+        this.current = function(){
+            return sequence.current();
+        };
+    };
+    concatenateenationQuery.prototype = base;
+    return concatenateenationQuery;
 }),
 WhenQuery = (function (_this) {
         var base = _this,
@@ -395,19 +458,27 @@ Query.patch = function (proto) {
         if (it.hasOwnProperty(f) && !proto.hasOwnProperty(f)) {
             (function (f) {
                 proto[f] = function () {
-                    var it = Query(this);
-                    return it[f].apply(it, arguments);
+                    var query = this.asQuery();
+                    return query[f].apply(query, arguments);
                 };
             })(f);
         }
     }
-
-    Query.range = function (start, count, step) {
-        var rangeQuery = RangeQuery(start, count, step);
-        return new rangeQuery();
+    proto.query = function(){
+        var query =  new Query(this);
+        this.query = function(){
+            return query;
+        }
+        return this.query();
     };
     return proto;
 };
+
+Query.range = function (start, count, step) {
+        var rangeQuery = RangeQuery(start, count, step);
+        return new rangeQuery();
+};
+    
 Query.patch(Array.prototype);
 Query.generate = function(generator, seed){
     var arr = [],

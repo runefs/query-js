@@ -382,6 +382,28 @@ describe("Query",function(){
          });
      })
      
+     describe("select", function(){
+         it("empty", function(){
+             expect(emptyQuery.select(function(e){ return e;}).count()).to.equal(0);
+         });
+         it("more", function(){
+             expect([3,4,5].select(function(e){ return e * 10;}).sum()).to.equal(120);
+         });
+         
+         it("with property name", function(){
+             expect([{val: 3},{val: 4},{val: 5}].select("val").sum()).to.equal(12);
+         });
+       });
+       
+       describe("where", function(){
+         it("empty", function(){
+             expect(emptyQuery.where(function(e){ return e;}).count()).to.equal(0);
+         });
+         it("more", function(){
+             expect([3,4,5].where(function(e){ return e % 2;}).sum()).to.equal(8);
+         });
+       });
+       
        describe("min", function(){
          it("empty", function(){
              expect(function(){emptyQuery.min()}).to.throw(emptyQuery.first.throws.empty);
@@ -428,7 +450,7 @@ describe("Query",function(){
          
        });
        
-       describe("iterate", function(){
+        describe("iterate", function(){
          it("empty", function(){
              [].iterate(function(){ throw Error("shuold not happen")});
              expect(true).to.be.true;
@@ -441,21 +463,40 @@ describe("Query",function(){
          });
        });
        
-       describe("select", function(){
+       describe("average", function(){
          it("empty", function(){
-             expect(emptyQuery.select(function(e){ return e;}).count()).to.equal(0);
+             expect(emptyQuery.average()).to.equal(undefined);
          });
-         it("more", function(){
-             expect([3,4,5].select(function(e){ return e * 10;}).sum()).to.equal(120);
+         it("no projection", function(){
+             expect([3,4,5].average()).to.equal(4);
+         });
+         
+         it("with property name", function(){
+             expect([{val: 3} ,{val:4},{val: 5} ].average("val")).to.equal(4);
          });
        });
        
-       describe("where", function(){
-         it("empty", function(){
-             expect(emptyQuery.where(function(e){ return e;}).count()).to.equal(0);
+        describe("concatenate", function(){
+         it("empty",function(){
+             expect(emptyQuery.concatenate().any()).to.equal(false);
          });
-         it("more", function(){
-             expect([3,4,5].where(function(e){ return e % 2;}).sum()).to.equal(8);
+         
+         it("Two queries in an array", function(){
+             expect([new Query([3,4,5]),new Query([2])].concatenate().count()).to.equal(4);
+         });
+         
+         it("Two arrays in an array", function(){
+             expect([[3,4,5],[2]].concatenate().count()).to.equal(4);
+         });
+         
+         it("Two queries", function(){
+             expect(new Query([new Query([3,4,5]),new Query([2])]).concatenate().count()).to.equal(4);
+         });
+         
+         it("One empty", function(){
+             expect(new Query([new Query([3,4,5]),new Query([])]).concatenate().count()).to.equal(3);
          });
        });
+       
+      
 });

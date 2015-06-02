@@ -31,6 +31,16 @@ Test wheter any elements in a sequence satisfies the given predicate
        willBeTrue = arr.any(function(e){return e === 4;});
    ```
    
+### <a name="average"></a>any ###
+Computes the aevrage of the elements in the sequence
+**Example**
+   ```JavaScript
+        //will be 4
+    var avg = [2,4,6].average();
+        //wil also be 4
+        avg = [{value : 2},{value : 4},{value : 6}].average(function(e){return e.value;});
+   ```
+   
 ### <a name="count"></a>count ###
 Returns the count of elements in the sequence
 
