@@ -1,4 +1,4 @@
-var Tree, week, Query = function (arr) {
+var Tree, Query = function (arr) {
     var undef = {},
         index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
@@ -42,6 +42,10 @@ var Tree, week, Query = function (arr) {
         select: function (projection) {
             var res = ProjectedQuery(this);
             return new res(projection);
+        },
+        selectMany : function(localProjection, elementProjection){
+            var concatenation = this.concatenate(localProjection, elementProjection);
+            return concatenation;
         },
 	    iterate: function(p){
 	        this.reset();
@@ -129,10 +133,10 @@ var Tree, week, Query = function (arr) {
             return sum/count;
         },
         concatenate : function(localProjection, elementProjection){
-          var res = concatenateenationQuery(this);
+          var res = ConcatenationQuery(this);
           if (arguments.length === 0){
              return new res();
-          } else if (arguments.length === 1){
+          } else if (arguments.length === 1 || (arguments.length === 2 && !elementProjection)){
              return new res(localProjection);
           } else {
               return new res(localProjection, elementProjection);
@@ -158,6 +162,7 @@ var Tree, week, Query = function (arr) {
         },
         count : function(p){
             var count = 0,projection = p || function(e){ return e !== undefined;};
+            this.reset();
             while(this.next()){
                 count += projection(this.current()) ? 1 : 0;
             }
@@ -348,31 +353,34 @@ ProjectedQuery = (function (_this) {
         ProjectingQuery.prototype = base;
         return ProjectingQuery;
 }),
-concatenateenationQuery = (function(_this){
+ConcatenationQuery = (function(_this){
     var base = _this,
-    concatenateenationQuery = function(localProjection, elementProjection){
-           var sequences = arguments.length > 1  ? base.select(localProjection) : base,
-               sequence;
-               if(arguments.length === 1){
-                   elementProjection = localProjection;
-                   localProjection = undefined;
-               }
-               if(!sequences.next()){
-                   return Query([]);
-               } else{
-                   sequence = sequences.current()
-                   sequence.reset();
-               }
-               
-        this.next = function(){
-           while(!sequence.next()) {
-               if(sequences.next()){
-                   sequence = sequences.current();
-                   sequence.reset();
-                   sequence = elementProjection ? sequence.select(elementProjection) : sequence;
-               } else{
-                   return false;
-               }
+        ConcatenationQuery = function(localProjection, elementProjection){
+           var sequences,sequence;
+           if(arguments.length === 1){
+               elementProjection = localProjection;
+               localProjection = undefined;
+           }
+           sequences = localProjection  ? base.select(localProjection) : base;
+           if(!sequences.next()){
+               return Query([]);
+           }
+           this.reset = function(){
+                sequences.reset();
+                sequences.next();
+                sequence = sequences.current();
+                sequence.reset();
+                sequence = elementProjection ? sequence.select(elementProjection) : sequence;
+           };
+           this.next = function(){
+               while(!sequence || !sequence.next()) {
+                   if(sequences.next()){
+                       sequence = sequences.current();
+                       sequence.reset();
+                       sequence = elementProjection ? sequence.select(elementProjection) : sequence;
+                   } else {
+                       return false;
+                   }
            }
            return true;
         };
@@ -380,8 +388,8 @@ concatenateenationQuery = (function(_this){
             return sequence.current();
         };
     };
-    concatenateenationQuery.prototype = base;
-    return concatenateenationQuery;
+    ConcatenationQuery.prototype = base;
+    return ConcatenationQuery;
 }),
 WhenQuery = (function (_this) {
         var base = _this,
@@ -458,7 +466,7 @@ Query.patch = function (proto) {
         if (it.hasOwnProperty(f) && !proto.hasOwnProperty(f)) {
             (function (f) {
                 proto[f] = function () {
-                    var query = this.asQuery();
+                    var query = this.query();
                     return query[f].apply(query, arguments);
                 };
             })(f);
@@ -466,9 +474,11 @@ Query.patch = function (proto) {
     }
     proto.query = function(){
         var query =  new Query(this);
-        this.query = function(){
-            return query;
-        }
+        Object.defineProperty(this,"query",{
+            enumerable : false,
+            configurable : false,
+            value : function(){return query;}
+        });
         return this.query();
     };
     return proto;
@@ -499,14 +509,15 @@ Query.generate = function(generator, seed){
     })(new Query(arr));
     return new QueryGenerator(generator);
 };
-Object.prototype.keys = function(){ 
-    var res = []; 
-    for(var prop in this){
-       if(this.hasOwnProperty(prop)) {
-           res.push(prop);
-       }
-    }
- return res;
-};
-
+if(!Object.prototype.keys) {
+    Object.prototype.keys = function () {
+        var res = [];
+        for (var prop in this) {
+            if (this.hasOwnProperty(prop)) {
+                res.push(prop);
+            }
+        }
+        return res;
+    };
+}
 module.exports = function(arr){ return Query(arr);};

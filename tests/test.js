@@ -1,6 +1,6 @@
-/* global describe it */
+/* global describe it require*/
 
-var Query = require("./query.js"),
+var Query = require("./../query.js"),
     expect = require("chai").expect;
    
 describe("Query",function(){
@@ -216,9 +216,9 @@ describe("Query",function(){
             
             var arr = [1,2,5,3,4],
                 res = Query(arr).orderBy();
-            console.log(res);
+
             res = res.each();
-            
+
             expect(res[0]).to.equal(arr[0]);
             expect(res[1]).to.equal(arr[1]);
             expect(res[2]).to.equal(arr[3]);
@@ -452,8 +452,8 @@ describe("Query",function(){
        
         describe("iterate", function(){
          it("empty", function(){
-             [].iterate(function(){ throw Error("shuold not happen")});
-             expect(true).to.be.true;
+             [].iterate(function(){ throw Error("should not happen")});
+             expect(true).to.equal(true);
          });
          
          it("more", function(){
@@ -482,11 +482,17 @@ describe("Query",function(){
          });
          
          it("Two queries in an array", function(){
-             expect([new Query([3,4,5]),new Query([2])].concatenate().count()).to.equal(4);
+             var res = [new Query([3,4,5]),new Query([2])].concatenate().each();
+             expect(res.length).to.equal(4);
          });
          
          it("Two arrays in an array", function(){
-             expect([[3,4,5],[2]].concatenate().count()).to.equal(4);
+             var res = [[3,4,5],[2]].concatenate().each();
+             expect(res.length).to.equal(4);
+             expect(res[0]).to.equal(3);
+             expect(res[1]).to.equal(4);
+             expect(res[2]).to.equal(5);
+             expect(res[3]).to.equal(2);
          });
          
          it("Two queries", function(){
@@ -497,6 +503,22 @@ describe("Query",function(){
              expect(new Query([new Query([3,4,5]),new Query([])]).concatenate().count()).to.equal(3);
          });
        });
-       
-      
+
+    describe("selectMany", function() {
+        it("empty", function () {
+            expect(emptyQuery.selectMany().count()).to.equal(0);
+            expect(emptyQuery.selectMany("val").count()).to.equal(0);
+            expect(emptyQuery.selectMany("val","index").count()).to.equal(0);
+        });
+
+        it("straight element projection",function(){
+            var res = [[1,2],[3],[4]].selectMany(function(e){ return e*e;}).each();
+            expect(res[0]).to.equal(1);
+            expect(res[3]).to.equal(16);
+
+            res = [[{val: 1},{val: 2}],[{val: 3}],[{val: 4}]].selectMany("val").each();
+            expect(res[0]).to.equal(1);
+            expect(res[3]).to.equal(4);
+        })
+    });
 });
