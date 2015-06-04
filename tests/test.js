@@ -184,11 +184,11 @@ describe("Query",function(){
             expect(res[0]).to.equal(1);
         });
         
-        if("Custom  comparison", function(a,b){
+        it("Custom  comparison", function(){
             var first = {index : 1, value : 4},
                 res = [first, {index : 4, value : 4},{index : 2, value : 3}].distinct(function(a,b){ return a.index === b.index }).each();
             expect(res[0]).to.equal(first);
-        })
+        });
         
         it("all the same",function(){
             
@@ -230,7 +230,7 @@ describe("Query",function(){
     describe("singleOrDefault",function(){
         
         it("empty",function(){
-            var undef = {}, seq = emptyQuery;
+            var undef = {};
             expect(emptyQuery.singleOrDefault(undef)).to.equal(undef);
             expect(emptyQuery.singleOrDefault(function(){return true;},undef)).to.equal(undef);
             expect(emptyQuery.singleOrDefault(function(){return true;})).to.equal(null);
@@ -238,15 +238,14 @@ describe("Query",function(){
         });
         
         it("one",function(){
-            var undef = {};
-            expect(Query([1]).singleOrDefault()).to.equal(1);
-            expect(Query([1,2]).singleOrDefault(function(e){return e%2;})).to.equal(1);
-            expect(Query([1]).singleOrDefault(function(e){return e%2;})).to.equal(1);
+            expect(new Query([1]).singleOrDefault()).to.equal(1);
+            expect(new Query([1,2]).singleOrDefault(function(e){return e%2;})).to.equal(1);
+            expect(new Query([1]).singleOrDefault(function(e){return e%2;})).to.equal(1);
         });
         
         it("more than one",function(){
             var verify = function(arr,predicate){
-                var seq = Query(arr);
+                var seq =new Query(arr);
                    expect(function(){seq.singleOrDefault(predicate)}).to.throw(seq.singleOrDefault.throws.tooMany);
             };
             verify([1,2]);
@@ -254,7 +253,7 @@ describe("Query",function(){
         });
         
          it("None satisfying predicate",function(){
-             var undef = {}
+             var undef = {};
              expect([1,2,3].singleOrDefault(function(e){return e > 3;},undef)).to.equal(undef);
              expect([1,2,3].singleOrDefault(function(e){return e > 3;})).to.equal(null);
          });
@@ -326,10 +325,10 @@ describe("Query",function(){
      describe("aggregate",function(){
         it("empty",function(){
             var s = {};
-            expect(emptyQuery.aggregate(function(seed,e){return seed;},s)).to.equal(s);
+            expect(emptyQuery.aggregate(function(seed){return seed;},s)).to.equal(s);
         });
         it("empty no seed",function(){
-            expect(emptyQuery.aggregate(function(seed,e){return seed;})).to.equal(undefined);
+            expect(emptyQuery.aggregate(function(seed){return seed;})).to.equal(undefined);
             expect(isNaN([1,2,3,4,5].aggregate(function(seed,e){return seed + e;}))).to.equal(true);
         });
         
@@ -372,7 +371,7 @@ describe("Query",function(){
          });
          it("taken more than we have", function(){
              var arr =[1,2,3,4,5], 
-                 res = arr.take(10) 
+                 res = arr.take(10);
              expect(res.count()).to.equal(5);
          });
          
@@ -380,7 +379,7 @@ describe("Query",function(){
              var arr =[1,2,3,4,5];
              expect(arr.skip(1).take(1).single()).to.equal(arr[1]);
          });
-     })
+     });
      
      describe("select", function(){
          it("empty", function(){
