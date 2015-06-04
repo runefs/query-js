@@ -1,6 +1,6 @@
 {
   "name": "query-js",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Sequence operations for JavaScript. For documentation see [github][https://github.com/runefs/query-js] or [my blog][http/runefs.com]",
   "main": "query.js",
   "dependencies": {
