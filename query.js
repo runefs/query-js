@@ -521,19 +521,17 @@ PermutationQuery = (function (_this) {
             var head,
                 tail,
                 onlyHead,
-                count,
                 array;
 
             if (base.any()) {
                 this.reset = function () {
-                    array = base.each();
+                    array = base.select(function(){return this;}).each();
                     head = [array.shift()];
                     if (array.length) {
                         tail = array.permutations();
                         onlyHead = false;
                     } else {
                         onlyHead = true;
-                        count = 1;
                     }
                 };
                 this.reset();
@@ -541,14 +539,15 @@ PermutationQuery = (function (_this) {
                     console.log("only head", head);
                     this.next = function() {
                         var res = onlyHead;
-                        onlyHead = !onlyHead;
+                        if(!onlyHead){
+                            head = undefined;
+                        }
+                        onlyHead = false;
                         return res;
                     };
                     
                     this.current = function(){
-                        var res = head;
-                        head = undefined;
-                        return res;
+                        return head;
                     }
                 } else {
                     console.log("got tail", array);
