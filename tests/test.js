@@ -1,11 +1,14 @@
 /* global describe it require*/
 
 var Query = require("./../query.js"),
-    expect = require("chai").expect;
-   
+    expect = require("chai").expect,
+    isOdd = function(){return this % 2;},
+    getIndex = function(){return this.index;},
+    getValue = function(){return this.value;};
+
 describe("Query",function(){
+    "use strict";
     var emptyQuery = Query([]);
-    
     describe("count",function(){
         it("Counting nothing",function(){
             expect(emptyQuery.count()).to.equal(0);
@@ -16,29 +19,29 @@ describe("Query",function(){
             
         });
         it("Counting with where",function(){
-            expect(Query([1,2,3,4,5]).where(function(e){return e % 2;}).count()).to.equal(3);
+            expect(Query([1,2,3,4,5]).where(isOdd).count()).to.equal(3);
         });
     });
     describe("first",function(){
         it("Should throw on empty",function(){
             expect(function(){emptyQuery.first()}).to.throw(emptyQuery.first.empty);
         });
-    
+
         it("One and only",function(){
             expect(Query([1]).first()).to.equal(1);
         });
-    
+
         it("many more",function(){
             expect(Query([2,1,3]).first()).to.equal(2);
         });
-        
+
         it("with predicate",function(){
-            expect(Query([2,1,3]).first(function(e){return e % 2;})).to.equal(1);
+            expect(Query([2,1,3]).first(isOdd)).to.equal(1);
         });
     });
-    
+
      describe("firstOrDefault",function(){
-        
+
         it("Specific value as default",function(){
             expect(emptyQuery.firstOrDefault(12)).to.equal(12);
         });
@@ -51,7 +54,7 @@ describe("Query",function(){
         it("Null as default",function(){
             expect(emptyQuery.firstOrDefault()).to.equal(null);
         });
-        
+
         it("Compare to first",function(){
             var verify = function(arr,predicate){
                      var seq = Query(arr);
@@ -59,7 +62,7 @@ describe("Query",function(){
                 };
                 verify([2]);
                 verify([2,1,3]);
-                verify([2,1,3],function(e){return e % 2;});
+                verify([2,1,3],isOdd);
         });
         
      });
@@ -75,29 +78,6 @@ describe("Query",function(){
     
         it("Many more",function(){
             expect(Query([false, false]).any()).to.equal(true);
-        });
-    });
-    
-    describe("all",function(){
-        var pred = function(e){return !e};
-        it("Empty",function(){
-            expect(emptyQuery.all(pred)).to.equal(true);
-        });
-        
-        it("Empty",function(){
-            expect(function(){emptyQuery.all()}).to.throw(emptyQuery.all.throws.noPredicate);
-        });
-    
-        it("One and only",function(){
-            expect(Query([false]).all(pred)).to.equal(true);
-        });
-    
-        it("Many more",function(){
-            expect(Query([false, false, false]).all(pred)).to.equal(true);
-        });
-        
-        it("Not all",function(){
-            expect(Query([false, true, false]).all(pred)).to.equal(false);
         });
     });
     
@@ -136,7 +116,7 @@ describe("Query",function(){
         it("several with predicate",function(){
             var i,
                 arr = [1,5,3],
-                predicate = function(e){ return e % 2; },
+                predicate = isOdd,
                 res = Query(arr).each(predicate);
                 
             expect(res.length).to.equal(arr.length);
@@ -161,56 +141,7 @@ describe("Query",function(){
             }
         })
     });
-    
-    describe("when",function(){
-        
-        it("Simple",function(){
-            
-            var arr = [1,3,2,4,5],
-                res = arr.when(function(e){return e < 4;}).each();
-            expect(res.length).to.equal(3);
-            expect(res[0]).to.equal(arr[0]);
-            expect(res[1]).to.equal(arr[1]);
-            expect(res[2]).to.equal(arr[2]);
-        })
-    });
-    
-    describe("distinct",function(){
-        it("one",function(){
-            
-            var arr = [1],
-                res = Query(arr).distinct().each();
-                
-            expect(res[0]).to.equal(1);
-        });
-        
-        it("Custom  comparison", function(){
-            var first = {index : 1, value : 4},
-                res = [first, {index : 4, value : 4},{index : 2, value : 3}].distinct(function(a,b){ return a.index === b.index }).each();
-            expect(res[0]).to.equal(first);
-        });
-        
-        it("all the same",function(){
-            
-            var arr = [1,1,1],
-                res = Query(arr).distinct().each();
-                
-            expect(res[0]).to.equal(1);
-            expect(res.length).to.equal(1);
-        });
-        
-        it("Mixed",function(){
-            var i,arr = [1,2,1,2,3,4,3,4,5],
-                res = Query(arr).distinct().each();
-            arr = [1,2,3,4,5];    
-
-            expect(res.length).to.equal(arr.length);
-            for(i = 0;i<arr.length; i += 1){
-                   expect(res[i]).to.equal(arr[i]);
-            }
-        });
-    });
-    
+     
     describe("orderBy",function(){
         it("simple",function(){
             
@@ -239,8 +170,8 @@ describe("Query",function(){
         
         it("one",function(){
             expect(new Query([1]).singleOrDefault()).to.equal(1);
-            expect(new Query([1,2]).singleOrDefault(function(e){return e%2;})).to.equal(1);
-            expect(new Query([1]).singleOrDefault(function(e){return e%2;})).to.equal(1);
+            expect(new Query([1,2]).singleOrDefault(isOdd)).to.equal(1);
+            expect(new Query([1]).singleOrDefault(isOdd)).to.equal(1);
         });
         
         it("more than one",function(){
@@ -249,35 +180,36 @@ describe("Query",function(){
                    expect(function(){seq.singleOrDefault(predicate)}).to.throw(seq.singleOrDefault.throws.tooMany);
             };
             verify([1,2]);
-            verify([1,2,3],function(e){return e%2;});
+            verify([1,2,3],isOdd);
         });
         
          it("None satisfying predicate",function(){
              var undef = {};
-             expect([1,2,3].singleOrDefault(function(e){return e > 3;},undef)).to.equal(undef);
-             expect([1,2,3].singleOrDefault(function(e){return e > 3;})).to.equal(null);
+             expect([1,2,3].singleOrDefault(function(){return this > 3;},undef)).to.equal(undef);
+             expect([1,2,3].singleOrDefault(function(){return this > 3;})).to.equal(null);
          });
         
     });
     
     describe("single",function(){
         var verify = function(seq,message,predicate){
-                expect(function(){seq.single(predicate)}).to.throw(message);
+               var f = arguments.length > 2 ? function(){seq.single(predicate)} : function(){seq.single()};
+                expect(f).to.throw(message);
             };
         it("empty",function(){
             var seq = emptyQuery,
                 errMsg = seq.single.throws.empty;
                 
             verify(seq,errMsg);
-            verify(seq,errMsg,function(e){return e%2;});
-            verify(Query([2]),errMsg,function(e){return e%2;});
+            verify(seq,errMsg,isOdd);
+            verify(Query([2]),errMsg,isOdd);
         });
         it("Too many",function(){
             var seq = Query([1,2,3]),
                 errMsg = seq.single.throws.tooMany;
                 
             verify(seq,errMsg);
-            verify(seq,errMsg,function(e){return e % 2;});
+            verify(seq,errMsg,isOdd);
         }) 
     });
     
@@ -285,7 +217,7 @@ describe("Query",function(){
         it("all same key",function(){
             var arr = [{index : "a",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
                 seq = Query(arr),
-                res = seq.groupBy(function(e){ return e.index});
+                res = seq.groupBy(function(){ return this.index});
             expect(res.a.length).to.equal(arr.length);
             expect(res.a[1].value).to.equal(1);
         });
@@ -293,7 +225,7 @@ describe("Query",function(){
         it("more keys",function(){
             var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
                 seq = Query(arr),
-                res = seq.groupBy(function(e){ return e.index});
+                res = seq.groupBy(function(){ return this.index});
             expect(res.a.length).to.equal(arr.length - res.b.length);
             expect(res.b[0].value).to.equal(0);
             expect(res.a[0].value).to.equal(1);
@@ -303,10 +235,10 @@ describe("Query",function(){
         it("custom value",function(){
             var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
                 seq = Query(arr),
-                res = seq.groupBy(function(e){ return e.index}, function(e){return e.value;}),
+                res = seq.groupBy(function(){ return this.index}, getValue),
                 a = res.a.sum(),
                 b = res.b.sum(),
-                sum = arr.sum(function(a){return a.value;});
+                sum = arr.sum(getValue);
                 
             expect(a).to.equal(3);
             expect(sum - a).to.equal(b);
@@ -315,28 +247,13 @@ describe("Query",function(){
         it("As Query",function(){
             var arr = [{index : "b",value : 5},{index : "a",value : 1},{index : "a",value : 2}],
                 seq = Query(arr),
-                res = seq.groupBy(function(e){ return e.index});
-            expect(res.single(function(kv){return kv.key ==="b";}).value.single().value).to.equal(5);
-            expect(res.select(function(kv){return kv.value.sum(function(kv){return kv.value;});}).sum()).to.equal(8);
-            expect(res.where(function(kv){return kv.key === "a";}).select(function(kv){return kv.value.sum(function(kv){return kv.value;});}).sum()).to.equal(3);
+                res = seq.groupBy(function(){ return this.index});
+            expect(res.single(function(){return this.key ==="b";}).value.single().value).to.equal(5);
+            expect(res.select(function(){return this.value.sum(getValue);}).sum()).to.equal(8);
+            expect(res.where(function(){return this.key === "a";}).select(function(kv){return kv.value.sum(getValue);}).sum()).to.equal(3);
         });
     });
     
-     describe("aggregate",function(){
-        it("empty",function(){
-            var s = {};
-            expect(emptyQuery.aggregate(function(seed){return seed;},s)).to.equal(s);
-        });
-        it("empty no seed",function(){
-            expect(emptyQuery.aggregate(function(seed){return seed;})).to.equal(undefined);
-            expect(isNaN([1,2,3,4,5].aggregate(function(seed,e){return seed + e;}))).to.equal(true);
-        });
-        
-        it("With seed",function(){
-            expect([1,2,3,4,5].aggregate(function(seed,e){return seed + e;},0)).to.equal(15);
-        });
-     });
-     
      describe("product",function(){
         it("empty",function(){
             expect(emptyQuery.product()).to.equal(0);
@@ -347,7 +264,7 @@ describe("Query",function(){
         });
         
         it("with projection",function(){
-            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].product(function(e){return e.value;})).to.equal(120);
+            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].product(getValue)).to.equal(120);
         });
      });
      
@@ -361,7 +278,8 @@ describe("Query",function(){
         });
         
         it("with projection",function(){
-            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].sum(function(e){return e.value;})).to.equal(15);
+            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].sum(function(){return this.value;})).to.equal(15);
+            expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].sum("value")).to.equal(15);
         });
      });
      
@@ -380,52 +298,7 @@ describe("Query",function(){
              expect(arr.skip(1).take(1).single()).to.equal(arr[1]);
          });
      });
-     
-     describe("select", function(){
-         it("empty", function(){
-             expect(emptyQuery.select(function(e){ return e;}).count()).to.equal(0);
-         });
-         it("more", function(){
-             expect([3,4,5].select(function(e){ return e * 10;}).sum()).to.equal(120);
-         });
-         
-         it("with property name", function(){
-             expect([{val: 3},{val: 4},{val: 5}].select("val").sum()).to.equal(12);
-         });
-       });
-       
-       describe("where", function(){
-         it("empty", function(){
-             expect(emptyQuery.where(function(e){ return e;}).count()).to.equal(0);
-         });
-         it("more", function(){
-             expect([3,4,5].where(function(e){ return e % 2;}).sum()).to.equal(8);
-         });
-       });
-       
-       describe("min", function(){
-         it("empty", function(){
-             expect(function(){emptyQuery.min()}).to.throw(emptyQuery.first.throws.empty);
-         });
-         
-         it("one", function(){
-             var elem = 4;
-             expect([elem].min()).to.equal(elem);
-         });
-         
-         it("more", function(){
-             var elem = 4;
-             expect([5,10,elem,5].min()).to.equal(elem);
-         });
-         
-         it("more", function(){
-             var elem = {index:2};
-             expect([elem,{index:5}].min(function(e){return e.index;})).to.equal(elem);
-         });
-         
-         
-       });
-       
+          
        describe("max", function(){
          it("empty", function(){
              expect(function(){emptyQuery.max()}).to.throw(emptyQuery.first.throws.empty);
@@ -443,23 +316,10 @@ describe("Query",function(){
          
          it("more", function(){
              var elem = {index:11};
-             expect([elem,{index:5}].max(function(e){return e.index;})).to.equal(elem);
+             expect([elem,{index:5}].max(getIndex)).to.equal(elem);
          });
          
          
-       });
-       
-        describe("iterate", function(){
-         it("empty", function(){
-             [].iterate(function(){ throw Error("should not happen")});
-             expect(true).to.equal(true);
-         });
-         
-         it("more", function(){
-             var res = "";
-             [1,4,5].iterate(function(e){res += e });
-             expect(res).to.equal("145");
-         });
        });
        
        describe("average", function(){
@@ -503,21 +363,5 @@ describe("Query",function(){
          });
        });
 
-    describe("selectMany", function() {
-        it("empty", function () {
-            expect(emptyQuery.selectMany().count()).to.equal(0);
-            expect(emptyQuery.selectMany("val").count()).to.equal(0);
-            expect(emptyQuery.selectMany("val","index").count()).to.equal(0);
-        });
 
-        it("straight element projection",function(){
-            var res = [[1,2],[3],[4]].selectMany(function(e){ return e*e;}).each();
-            expect(res[0]).to.equal(1);
-            expect(res[3]).to.equal(16);
-
-            res = [[{val: 1},{val: 2}],[{val: 3}],[{val: 4}]].selectMany("val").each();
-            expect(res[0]).to.equal(1);
-            expect(res[3]).to.equal(4);
-        })
-    });
 });

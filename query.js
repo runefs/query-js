@@ -1,21 +1,28 @@
+/* require */
 var Tree, Query = function (arr) {
+    "use strict";
     var undef = {},
-        index = -1,
         getSequqneceAndDefault = function(seq,predicate,def){
             var _this = typeof predicate === "function" ? seq.where(predicate) : seq;
             def = (typeof predicate === "function" ? def : predicate) || null;
             return { _this : _this,
                     def : def };
         },
-        idProjection = function (obj) { return obj; },
+        idProjection = function () {
+            "use strict";
+            return this;
+        },
         FilteredQuery = function (_this) {
-            var base = _this, n,
+            var base = _this,
                 FilteringQuery =
                 function (predicate) {
-                    predicate = predicate || function () { return true; };
+                    //noinspection JSPotentiallyInvalidUsageOfThis
                     this.next = function () {
+                        var n;
                         while ((n = base.next())) {
-                            if (predicate(base.current())) return n;
+                            if (predicate.call(base.current())) {
+                                return true;
+                            }
                         }
                         return n;
                     };
@@ -23,173 +30,206 @@ var Tree, Query = function (arr) {
             FilteringQuery.prototype = base;
             return FilteringQuery;
         };
-
-    var seq = {
-        next: function () {
-            return ++index < arr.length;
-        },
-        current: function () {
-            return arr[index];
-        },
-        reset: function () {
+    
+    var seq = function() {
+        
+        var $this = this,
             index = -1;
-        },
-        where: function (predicate) {
+        Object.defineProperty(this,"index",{
+            enumerable : false,
+            configurable : false,
+            value : function(val){
+                if(arguments.length === 1) { index = val; }
+                return index;
+                }
+        });
+        this.current = function(){
+            return arr[this.index()];
+        };
+
+        this.reset = function(){
+            this.index(-1);
+        };
+        this.index(-1);
+        
+        this.next = function(){
+                $this.index($this.index()+1);
+                return $this.index() < arr.length;
+        };
+        this.where = function (predicate) {
             var res = FilteredQuery(this);
             res.prototype = this;
             return new res(predicate);
-        },
-        select: function (projection) {
+        };
+        this.select = function (projection) {
             var res = ProjectedQuery(this);
             return new res(projection);
-        },
-        selectMany : function(localProjection, elementProjection){
-            var concatenation = this.concatenate(localProjection, elementProjection);
-            return concatenation;
-        },
-	    iterate: function(p){
-	        this.reset();
-	        while(this.next()){
-		        p(this.current());
-	        }
-	        return this;
-	    },
-        max: function (p) {
-            var projection = p || idProjection;
-            return this.aggregate(function (max, elem) {
-                var proj = projection(elem);
-                return (projection(max) > proj) ? max : elem;
-            }, projection(this.first()));
-        },
-        min: function (p) {
-            var projection = p || idProjection;
-            return this.aggregate(function (min, elem) {
-                var proj = projection(elem);
-                return projection(min) < proj ? min : elem;
-            }, projection(this.first()));
-        },
-        each: function (p) {
-            //could return the array directly if there's no predicate
-            //and we have a simple Query. This would require that all Query types that provide 
-            //an implementation of current should also provide an implementation of each
-            var projection = p || idProjection,
-                res = [], 
-                projected;
-    	    if (this.__values__){
-    		    if(this.__values__[p]) {
-    		        return this.__values__[p];
-    		    }
-    	    } else {
-    		    this.__values__ = {};
-    	    }
+        };
+        this.selectMany = function (localProjection, elementProjection) {
+            return this.concatenate(localProjection, elementProjection);
+        };
+        this.iterate = function (p) {
+            var current
             this.reset();
             while (this.next()) {
-                projected = projection(this.current(), index);
+                current = this.current();
+                p.call(current,current);
+            }
+            return this;
+        };
+        var comparer = function(comp){
+            return function (p) {
+                var projection = p || idProjection,
+                    first = this.first();
+                return this.aggregate(function (min) {
+                    var proj = projection.call(this, this);
+                    return comp(projection.call(min,min), proj) ? min : this;
+                }, projection.call(first,first));
+            };
+        };
+        this.max = comparer(function (a,b) {
+            return a > b;
+        });
+        this.min = comparer(function (a,b) {
+            return a < b;
+        });
+        this.each = function (p) {
+            var projection = p || idProjection,
+                res = [],
+                projected;
+            if (this.__values__) {
+                if (this.__values__[p]) {
+                    return this.__values__[p];
+                }
+            } else {
+                this.__values__ = {};
+            }
+            this.reset();
+            while (this.next()) {
+                projected = projection.call(this.current());
                 res.push(projected);
             }
             return this.__values__[p] = res;
-        },
-        skip: function (count) {
-            var res = SkipQuery(this, function (i) { index = i; });
+        };
+        this.skip = function (count) {
+            this.reset();
+            var res = SkipQuery(this, function (i) {
+                index = i;
+            });
             return new res(count);
-        },
-        take: function (count) {
+        };
+        this.take = function (count) {
             var res = TakeQuery(this);
             return new res(count);
-        },
-        sum: function (p) {
-            var sum = 0, projection = p || idProjection;
-            sum = this.aggregate(function (sum, elem) { return sum + projection(elem); }, sum);
+        };
+        this.sum = function (projection) {
+            var sum = 0,
+                seq = arguments.length ? this.select(projection) : this;
+            sum = seq.aggregate(function (sum) {
+                return sum + this;
+            }, sum);
             return sum;
-        },
-        product: function (p) {
-            var product = 1, projection = p || idProjection;
+        };
+        this.product = function (projection) {
+            var seq = projection ? this.select(projection) : this;
             this.reset();
-            if(!this.any()) return 0;
-            product = this.aggregate(function (prod, elem) { return prod * projection(elem); }, product);
-            return product;
-        },
-        aggregate : function(folder,seed){
+            if (!this.any()) return 0;
+            return seq.aggregate(function (prod) {
+                return prod * this;
+            }, 1);
+        };
+        this.aggregate = function (folder, seed) {
             var state = seed;
             this.reset();
             while (this.next()) {
-                state = folder(state, this.current());
+                var current = this.current();
+                state = folder.call(current, state, current);
             }
             return state;
-        },
-        average : function(p){
-            var count = 0, 
-                sum = 0, 
+        };
+        this.average = function (p) {
+            var count = 0,
+                sum = 0,
                 _this = p ? this.select(p) : this;
-            
-            
+
+
             _this.reset();
-            if(!_this.next()) return undefined;
-            do { 
+            if (!_this.next()) return undefined;
+            do {
                 count++;
                 sum += _this.current();
             }
-            while(_this.next());
-            return sum/count;
-        },
-        concatenate : function(localProjection, elementProjection){
-          var res = ConcatenationQuery(this);
-          if (arguments.length === 0){
-             return new res();
-          } else if (arguments.length === 1 || (arguments.length === 2 && !elementProjection)){
-             return new res(localProjection);
-          } else {
-              return new res(localProjection, elementProjection);
-          }
-        },
-        groupBy: function (keySelector, valueSelector) {
-            var res = {}, key, obj;
-            valueSelector = valueSelector || function (obj) {return obj;};
-            this.reset();
-            while (this.next()) {
-                obj = this.current();
-                key = keySelector(obj);
-                if(!res.hasOwnProperty(key)){
-                    res[key] = [];
+            while (_this.next());
+            return sum / count;
+        };
+        this.concatenate = function (localProjection, elementProjection) {
+            var res = ConcatenationQuery(this);
+            if (arguments.length === 0) {
+                return new res();
+            } else if (arguments.length === 1 || (arguments.length === 2 && !elementProjection)) {
+                return new res(localProjection);
+            } else {
+                return new res(localProjection, elementProjection);
+            }
+        };
+        this.groupBy = function (keySelector, valueSelector) {
+            var res = {},
+                key,
+                keys = this.select(keySelector).each(),
+                values = valueSelector ? this.select(valueSelector || idProjection) : this;
+
+            keys.reset();
+            values.reset();
+            while (keys.next()) {
+                if (values.next()) {
+                    key = keys.current();
+
+                    if (!res.hasOwnProperty(key)) {
+                        res[key] = [];
+                    }
+                    res[key].push(values.current());
                 }
-                res[key].push(valueSelector(obj));
             }
             return KeyValueQuery(res)();
-        },
-        orderBy: function (projection) {
-            var res = OrderedQuery(this,projection);
+        };
+        this.orderBy = function (projection) {
+            var res = OrderedQuery(this, projection);
             return new res();
-        },
-        count : function(p){
-            var count = 0,projection = p || function(e){ return e !== undefined;};
+        };
+        this.count = function (p) {
+            var count = 0, predicate = p || function (e) {
+                    return e !== undefined;
+                };
             this.reset();
-            while(this.next()){
-                count += projection(this.current()) ? 1 : 0;
+            while (this.next()) {
+                count += predicate(this.current()) ? 1 : 0;
             }
             return count;
-        },
-        distinct: function (getter) {
+        };
+        this.distinct = function (getter) {
             var keys = {};
-            getter = getter || (function (d) { return d });
-            return this.where(function (d) {
-                var obj = getter(d);
+            getter = getter || (function () {
+                    return this;
+                });
+            return this.where(function () {
+                var obj = getter.call(this,this);
                 if (!keys.hasOwnProperty(obj)) {
                     keys[obj] = obj;
                     return true;
                 }
                 return false;
-            }).select(getter);
-        },
-        reverse: function () {
+            });
+        };
+        this.reverse = function () {
             return this.each().reverse();
-        },
-        lastOrDefault: function (predicate, def) {
-            var seqAndDef = getSequqneceAndDefault(seq, predicate,def), 
+        };
+        this.lastOrDefault = function (predicate, def) {
+            var seqAndDef = getSequqneceAndDefault(seq, predicate, def),
                 _this = seqAndDef._this,
                 c = seqAndDef.def;
-            
+
             _this.reset();
-            
+
             if (!_this.next()) {
                 return c;
             }
@@ -202,69 +242,80 @@ var Tree, Query = function (arr) {
                     return c;
                 }
             }
-        },
-        last : function(predicate){
-            var res = predicate ? this.lastOrDefault(predicate,undef) : this.lastOrDefault(undef);
+        };
+        this.last = function (predicate) {
+            var res = predicate ? this.lastOrDefault(predicate, undef) : this.lastOrDefault(undef);
 
-            if(res === undef) throw new Error(this.last.throws.empty);
+            if (res === undef) throw new Error(this.last.throws.empty);
             return res;
-        },
-        singleOrDefault : function(predicate,def){
+        };
+        this.singleOrDefault = function (predicate, def) {
             var _this = typeof predicate === "function" ? this.where(predicate) : this,
-                res = _this.firstOrDefault(predicate,undef);
+                res = _this.firstOrDefault(predicate, undef);
             def = (typeof predicate === "function" ? def : predicate) || null;
-            if(res === undef) return def;
+            if (res === undef) return def;
             _this.reset();
-            if(_this.skip(1).any()) throw new Error(this.single.throws.tooMany);
-            
-            return res;
-        },
-        single : function(predicate){
-            var res = predicate ? this.singleOrDefault(predicate,undef) : this.singleOrDefault(undef);
+            if (_this.skip(1).any()) throw new Error(this.single.throws.tooMany);
 
-            if(res === undef) throw new Error(this.single.throws.empty);
             return res;
-        },
-        first: function (predicate) {
+        };
+        this.single = function (predicate) {
+            var res = predicate ? this.singleOrDefault(predicate, undef) : this.singleOrDefault(undef);
+
+            if (res === undef) throw new Error(this.single.throws.empty);
+            return res;
+        };
+        this.first = function (predicate) {
             var _this;
             this.reset();
-            
+
             _this = typeof predicate === "function" ? this.where(predicate) : this;
             if (_this.next()) {
                 return _this.current();
             } else {
                 throw new Error(this.first.throws.empty);
             }
-            
-        },
-        firstOrDefault: function (predicate, def) {
+
+        };
+        this.firstOrDefault = function (predicate, def) {
             def = (typeof predicate === "function" ? def : predicate) || null;
-            try{
+            try {
                 return this.first(predicate);
             } catch (e) {
                 return def;
             }
-        },
-        any: function(predicate){
-            try{
-			    return this.first(predicate, undef) !== undef && true;
-            } catch (e){
+        };
+        this.any = function (predicate) {
+            try {
+                return this.first(predicate, undef) !== undef && true;
+            } catch (e) {
                 return false;
             }
-	    },
-	    when: function(predicate){
-            var res = WhenQuery(this);
+        };
+        this.takeWhile = function (predicate) {
+            if (arguments.length === 0 || !(typeof predicate === "function" || typeof predicate === "string")) throw new Error(this.all.throws.noPredicate);
+            var res = TakeWhileQuery(this);
             return new res(predicate);
-	    },
-	    all: function(predicate){
-	        if(!predicate) throw new Error(this.all.throws.noPredicate);
-	        this.reset();
-	        while(this.next()){
-	            if(!predicate(this.current())) return false;
-	        }
-	        return true;
-	    }
+        };
+        this.all = function (predicate,state) {
+            if (typeof predicate === "string") {
+                predicate = function(){return this[predicate];};
+            }
+            if (arguments.length === 0 || typeof predicate !== "function") throw new Error(this.all.throws.noPredicate);
+            this.reset();
+            state = state || true;
+            while (this.next()) {
+                state = predicate.call(this.current(),state);
+                if (!state) return false;
+            }
+            return true;
+        };
+        this.permutations = function () {
+            var res = PermutationQuery(this);
+            return new res();
+        };
     };
+    seq =  new seq();
     seq.single.throws = {
         empty   : "Query is empty",
         tooMany : "Expecting only one element"
@@ -282,15 +333,17 @@ var Tree, Query = function (arr) {
     return seq;
 },
 RangeQuery = function (start, count, step) {
+    "use strict";
     step = step || 1;
-    var base = new Query(),
-        ctor = function () {
+    var ctor = function () {
             var current, c;
 
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.reset = function () {
                 current = start - step;
                 c = count || 0;
             };
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.next = count ?
                 function () {
                     current += step;
@@ -300,15 +353,18 @@ RangeQuery = function (start, count, step) {
                     current += step;
                     return true;
                 };
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.current = function () {
                 return current;
             };
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.setIndex = function (i) {
                 if (!count && i >= count) return false;
                 current += step * i + start;
                 c = count ? count - i : count;
-		return true;
+		        return true;
             };
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.skip = function (count) {
                 var res = SkipQuery(this, function (i) {
                     c -= i;
@@ -316,21 +372,24 @@ RangeQuery = function (start, count, step) {
                 });
                 return new res(count);
             };
-
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.reset();
         };
 
-    ctor.prototype = base;
+    ctor.prototype = new Query();
     return ctor;
 },
 TakeQuery = function (_this) {
+    "use strict";
     var base = _this,
         TakeQuery =
         function (count) {
             var c = count;
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.next = function () {
                 return (base.next() && c--);
             };
+            //noinspection JSPotentiallyInvalidUsageOfThis
             this.reset = function () {
                 base.reset();
                 c = count;
@@ -340,20 +399,23 @@ TakeQuery = function (_this) {
     return TakeQuery;
 },
 ProjectedQuery = (function (_this) {
+    "use strict";
         var base = _this,
             ProjectingQuery = function (p) {
-                p = p || function (d) { return d };
+                p = p || idProjection;
                 var projection = typeof p === "function" 
                                  ? p
-                                 : function(e){ return e[p];};
+                                 : function(){ return this[p];};
                 this.current = function () {
-                    return projection(base.current());
+                    var current = base.current();
+                    return projection.call(current,current);
                 };
             };
         ProjectingQuery.prototype = base;
         return ProjectingQuery;
 }),
 ConcatenationQuery = (function(_this){
+    "use strict";
     var base = _this,
         ConcatenationQuery = function(localProjection, elementProjection){
            var sequences,sequence;
@@ -391,22 +453,32 @@ ConcatenationQuery = (function(_this){
     ConcatenationQuery.prototype = base;
     return ConcatenationQuery;
 }),
-WhenQuery = (function (_this) {
+TakeWhileQuery = (function (_this) {
+    "use strict";
         var base = _this,
-            WhenQuery = function (predicate) {
+            TakeWhileQuery = function (predicate) {
                 this.next = function () {
-                    return base.next() && predicate(base.current());
+                    var current;
+                    if(base.next()) {
+                        current = base.current();
+                        return predicate.call(current,current);
+                    } else {
+                        return false;
+                    }
                 };
             };
-        WhenQuery.prototype = base;
-        return WhenQuery;
+        TakeWhileQuery.prototype = base;
+        return TakeWhileQuery;
 }),
 OrderedQuery = (function(seq, projection){
-        if(Tree === undefined) Tree = require("functional-red-black-tree");
+    "use strict";
+        if(Tree === undefined) {
+            Tree = require("functional-red-black-tree");
+        }
         var tree = Tree(),
         current;
-        seq = projection ? seq.select(function(e){ return {key : projection(e), value : e};}) 
-                         : seq.select(function(e){ return {key : e,             value : e};});
+        seq = projection ? seq.select(function(){ return {key : projection.call(this), value : this};})
+                         : seq.select(function(){ return {key : this,             value : this};});
         
         while(seq.next()){
             current = seq.current();
@@ -422,6 +494,7 @@ OrderedQuery = (function(seq, projection){
         return SortedKeyQuery;
 }),
 KeyValueQuery = (function (obj) {
+    "use strict";
         var base = Query(obj.keys()),
             KeyValueQuery = function () {
                 this.current = function () {
@@ -441,7 +514,62 @@ KeyValueQuery = (function (obj) {
             return res;
         };
     }),
+PermutationQuery = (function (_this) {
+    "use strict";
+    var base = _this,
+        permutationQuery = function () {
+            var head,
+                tail,
+                onlyHead,
+                count,
+                array;
+
+            if (base.any()) {
+                this.reset = function () {
+                    array = base.each();
+                    head = [array.shift()];
+                    if (array.length) {
+                        tail = array.permutations();
+                        onlyHead = false;
+                    } else {
+                        onlyHead = true;
+                        count = 1;
+                    }
+                };
+                this.reset();
+                if (onlyHead) {
+                    console.log("only head", head);
+                    this.next = function() {
+                        var res = onlyHead;
+                        onlyHead = !onlyHead;
+                        return res;
+                    };
+                    
+                    this.current = function(){
+                        var res = head;
+                        head = undefined;
+                        return res;
+                    }
+                } else {
+                    console.log("got tail", array);
+                    this.next = function(){
+                        return tail.next();
+                    }
+                    this.current = function(){
+                        console.log("head", head, "tail", tail.current().each())
+                        return head.concatenate(tail.current());
+                    }
+                }
+            } else {
+                throw new Error("Query is empty")
+            }
+            
+        };
+    permutationQuery.prototype = base;
+    return permutationQuery;
+}),
 SkipQuery = (function (_this) {
+    "use strict";
         var base = _this,
             SkipQuery = function (count) {
                 var c;
@@ -461,6 +589,7 @@ SkipQuery = (function (_this) {
         return SkipQuery;
     });
 Query.patch = function (proto) {
+    "use strict";
     var f, it = new Query([]);
     for (f in it) {
         if (it.hasOwnProperty(f) && !proto.hasOwnProperty(f)) {
@@ -485,12 +614,14 @@ Query.patch = function (proto) {
 };
 
 Query.range = function (start, count, step) {
+    "use strict";
         var rangeQuery = RangeQuery(start, count, step);
         return new rangeQuery();
 };
     
 Query.patch(Array.prototype);
 Query.generate = function(generator, seed){
+    "use strict";
     var arr = [],
         QueryGenerator = (function (_this) {
 	    var sg = function (generator) {
