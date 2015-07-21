@@ -9,7 +9,7 @@ Aggregate is what is also known as a left fold. It applies a function to the ele
    ```JavaScript
    var arr = [1,2,3,4,5],
        //will be (0)+1+2+3+4+5 aka 15
-       sum = arr.aggregate(function (sum, elem) { return sum + elem; }, 0);
+       sum = arr.aggregate(function (sum) { return sum + this; }, 0);
    ```
    
 ### <a name="all"></a>all ###
@@ -17,9 +17,9 @@ Test wheter all elements in a sequence satisfies the given predicate. To be more
 **Example**
    ```JavaScript
    var arr = [1,2,3,4,5],
-       willBeFalse = arr.all(function(e){return e < 5;}),
-       willBeTrue = arr.all(function(e){return e < 6;});
-       willAlsoBeTrue = [].all(function(e){return false;});
+       willBeFalse = arr.all(  function(){return this < 5;}),
+       willBeTrue = arr.all(   function(){return this < 6;});
+       willAlsoBeTrue = [].all(function(){return false;});
    ```
    
 ### <a name="any"></a>any ###
@@ -27,8 +27,8 @@ Test wheter any elements in a sequence satisfies the given predicate
 **Example**
    ```JavaScript
    var arr = [2,4,6],
-       willBeFalse = arr.any(function(e){return e % 2 !== 0;}),
-       willBeTrue = arr.any(function(e){return e === 4;});
+       willBeFalse = arr.any(function(){return this % 2 !== 0;}),
+       willBeTrue = arr.any(function(){return this === 4;});
    ```
    
 ### <a name="average"></a>any ###
@@ -38,7 +38,7 @@ Computes the aevrage of the elements in the sequence
         //will be 4
     var avg = [2,4,6].average();
         //wil also be 4
-        avg = [{value : 2},{value : 4},{value : 6}].average(function(e){return e.value;});
+        avg = [{value : 2},{value : 4},{value : 6}].average(function(){return this.value;});
    ```
    
 ### <a name="count"></a>count ###
@@ -50,10 +50,8 @@ Returns the count of elements in the sequence
        //there's three numbers in the sequence
        willBeThree = arr.count(),
        //but only two of the numbers are odd
-       willBeTwo = arr.count(function(e){return e % 2;});
+       willBeTwo = arr.count(function(){return this % 2;});
    ```
-### <a name="current"></a>current ###
-Returns the current element in the sequence. Should generally not be used and might very well be removed from the API in a future release
 
 ### <a name="distinct"></a>distinct ###
 Filters out all duplicates, if no comparer is passed then a simple comparison is used. If custom comparison is required a compare can be passed
@@ -68,11 +66,11 @@ Filters out all duplicates, if no comparer is passed then a simple comparison is
 Is very similar to [select](#select) but instead of returning a lazily evaluated sequence it's evaluated upfront and returned in an array
 **Example**
 ```JavaScript
-   var seq = Sequence([1,2,3,4,5]).where(function(e){return e % 2;}),
+   var seq = Sequence([1,2,3,4,5]).where(function(){return this % 2;}),
        //[1,3,5]
        arr = seq.each();
        //[1,9,25]
-       arr = seq.each(function(e){return e * e;});
+       arr = seq.each(function(){return this * this;});
 ```
    
 ### <a name="first"></a>first ###
@@ -85,7 +83,7 @@ if no elements can be found it will throw an exception (See [firstOrDefault](#fi
          //simply get the list element in the sequence
          willBeTwo = arr.first();
          //get the first element, that satisfy the predicate
-         willBeThree = arr.first(function(e){ return e % 2; });
+         willBeThree = arr.first(function(){ return this % 2; });
 ```
     
 ### <a name="firstOrDefault"></a>firstOrDefault ###
@@ -99,7 +97,7 @@ Like [first](#first) but instead of throwing if no elements are found will retur
         //will be 4
         defaultValueSpecified = [].firstOrDefault(4);
         //With predicate
-        defaultValueSpecified = [2,4,6,8].firstOrDefault(function(e){return e % 2;},4);
+        defaultValueSpecified = [2,4,6,8].firstOrDefault(function(){return this % 2;},4);
 ```
     
 ### <a name="groupBy"></a>groupBy ###
@@ -117,7 +115,7 @@ Yopu can pass a second function which can be use to project the value of the ele
        //  "young"  : [{name:"Peter", age:"young"},{name:"Christine", age:"young"}],
        //  "Old"    : [{name:"Jack", age:"Old"}]
        //}
-       ageGroups = arr.groupBy(function(e){return e.age;})
+       ageGroups = arr.groupBy(function(){return this.age;})
    ```
 
 ### <a name="iterate"></a>iterate ###
@@ -137,7 +135,7 @@ Pick the last element of a sequence. If a predicate is specified, the last eleme
        //simply get the last element of the sequence
        willBeFour = arr.last();
        //get the last element that satisfy the predicate
-       wiilBeThree = arr.last(function(e){ return e % 2;});
+       wiilBeThree = arr.last(function(){ return this % 2;});
    ```
 ### <a name="lastOrDefault"></a>lastOrDefault ###
    
@@ -149,7 +147,7 @@ Works like [last](#last) except that it will return a default value if there are
        //simply get the last element of the sequence
        willBeFour = arr.last();
        //get the last element that satisfy the predicate
-       wiilBeThree = arr.last(function(e){ return e % 2;});
+       wiilBeThree = arr.last(function(){ return this % 2;});
 ```
    
 
@@ -159,7 +157,7 @@ Returns the maximal value of the sequence. The method accepts a function as the 
    ```JavaScript
    var arr = [{index : 1, value 4},{index : 2, value : 3}];
        //will be {index : 1, value 4}
-       max = arr.max(function(e){return e.value;});
+       max = arr.max(function(){return this.value;});
        //will be 5
        max = [1,3,5,4,2].max();
    ```
@@ -169,14 +167,10 @@ Returns the minimal value of the sequence. The method accepts a function for pro
    ```JavaScript
    var arr = [{index : 1, value 4},{index : 2, value : 3}];
        //will be {index : 2, value 3}
-       min = arr.min(function(e){return e.value;});
+       min = arr.min(function(){return this.value;});
        //will be 1
        max = [1,3,5,4,2].min();
    ```
-
-### <a name="next"></a>next ###
-Move the iteration to the next ele in the sequence. This is meant for internal use and should generally not be used
-
 
 ### <a name="orderBy"></a>orderBy ###
 orderBy sorts the sequence of elements. If no projection is provided then simple comparison of the individual elements is used.
@@ -186,7 +180,7 @@ orderBy sorts the sequence of elements. If no projection is provided then simple
        //will be [1,2,3,4,5]
        res = arr.orderBy()
        //will be [{index:0,count: 4},{index : 1, count : 3},{index : 2, count : 2}]
-       res = [{index:1,count: 3},{index : 0, count : 4},{index : 2, count : 2}].orderBy(function(e){return e.index;});
+       res = [{index:1,count: 3},{index : 0, count : 4},{index : 2, count : 2}].orderBy(function(){return this.index;});
    ```
 
 ### <a name="product"></a>product ###
@@ -197,12 +191,8 @@ Will take the product of all the elements
        //will be 120 (1*2*3*4*5)
        res = arr.product();
        //will also be 120
-       res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].product(function(e){return e.value;});
+       res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].product(function(){return this.value;});
    ```
-
-
-### <a name="reset"></a>reset ###
-Will restart the iteration of the sequence. Is meant for internal use an should generally not be used
 
 ### <a name="reverse"></a>reverse ###
 Reverses the sequence
@@ -220,7 +210,7 @@ This method lets you project the elements of sequence into a sequence of new val
 ```JavaScript
    var arr = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}],
        //will be [1,2,3,4,5]
-       res = arr.select(function(e){return e.value;})
+       res = arr.select(function(){return this.value;})
    ```
 
 ### <a name="single"></a>single ###
@@ -233,7 +223,7 @@ To be able to know whether or not multiple elements satifying the predicate are 
        //will fail because multiple valid elements exists
        error = arr.single();
        //will return because only one element satisfy the predicate
-       willBeTwo = arr.single(function(e){return e % 2 === 0;});
+       willBeTwo = arr.single(function(){return this % 2 === 0;});
    ```
 
 ### <a name="singleOrDefault"></a>singleOrDefault ###
@@ -247,11 +237,11 @@ Just like [single](#single), if multiple elements are present an exception will 
        //will fail because multiple valid elements exists
        error = arr.singleOrDefault();
        //will return because only one element satisfy the predicate
-       willBeTwo = arr.singleOrDefault(function(e){return e % 2 === 0;});
+       willBeTwo = arr.singleOrDefault(function(){return this % 2 === 0;});
        //will return null because no default are specified
-       willBeNull = arr.singleOrDefault(function(e){ return e > 3;});
+       willBeNull = arr.singleOrDefault(function(){ return this > 3;});
        //will return null because no default are specified
-       willReturnTheDefaultOfFour = arr.singleOrDefault(function(e){ return e > 3;},4);
+       willReturnTheDefaultOfFour = arr.singleOrDefault(function(){ return this > 3;},4);
    ```
 ### <a name="skip"></a>skip ###
 Skip a number of elements
@@ -269,7 +259,7 @@ Sums up the elements of the sequence
         //will be 15
         res = arr.sum();
         //will also be 15
-        res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].sum(function(e){return e.value;});
+        res = [{value : 1},{value : 2},{value : 3},{value : 4},{value : 5}].sum(function(){return this.value;});
    ```
 ### <a name="take"></a>take ###
 Takes a number of elements
@@ -286,7 +276,7 @@ Takes elements from the sequence as long as the predicate is satisfied
 ```JavaScript
     var arr = [1,2,3,4,5],
         //will be [1,3,5]
-        res = arr.where(function(e){ return e < 4; });
+        res = arr.where(function(){ return this < 4; });
    ```
    
 ### <a name="where"></a>where ###
@@ -295,5 +285,5 @@ Filters the sequence based on a predicate
 ```JavaScript
     var arr = [1,2,3,4,5],
         //will be [1,3,5]
-        res = arr.where(function(e){ return e % 2; });
+        res = arr.where(function(){ return this % 2; });
    ```
