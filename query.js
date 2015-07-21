@@ -1,82 +1,118 @@
 /* require */
-var Tree, Query = function (arr) {
+
+var defineProperty = function(obj,name,v){
+        Object.defineProperty(obj,name, {
+                enumerable : false,
+                configurable : false,
+                writable : false,
+                value : v
+        });
+    },
+    definePublicProperty = function(obj,name,v){
+        Object.defineProperty(obj,name, {
+                enumerable : true,
+                configurable : false,
+                writable : false,
+                value : v
+        });
+    },
+    defineGetter = function(obj,name,getter){
+        Object.defineProperty(obj,name,{
+                    enumerable : false,
+                    configurable : false,
+                    get : getter
+                });
+    },
+    define = {},
+    methods = ["next","reset", "clone"],
+    getters = ["current","length"],
+    create = function(collection, creator){
+        var prop;
+        for(prop = 0; prop<collection.length; prop++){
+            (function(name){    
+               define[name] = function(obj,f){
+                   creator(obj,name,f);
+               };
+            })(collection[prop]);
+        }    
+    };
+    
+    create(methods,defineProperty);
+    create(getters,defineGetter);
+    define.unknownLength = function(obj){
+        define.length(obj,function(){return null;});
+    };
+    var Tree,
+    idProjection = function(){"use strict"; return this;},
+    Query = function (arr) {
     "use strict";
     var undef = {},
-        getSequqneceAndDefault = function(seq,predicate,def){
-            var _this = typeof predicate === "function" ? seq.where(predicate) : seq;
-            def = (typeof predicate === "function" ? def : predicate) || null;
-            return { _this : _this,
-                    def : def };
-        },
         idProjection = function () {
             "use strict";
             return this;
         },
-        FilteredQuery = function (_this) {
-            var base = _this,
-                FilteringQuery =
-                function (predicate) {
-                    //noinspection JSPotentiallyInvalidUsageOfThis
-                    this.next = function () {
-                        var n;
-                        while ((n = base.next())) {
-                            if (predicate.call(base.current())) {
-                                return true;
-                            }
-                        }
-                        return n;
-                    };
-                };
-            FilteringQuery.prototype = base;
-            return FilteringQuery;
+        FilteringEnumerator = function (base,predicate) {
+            var _current;
+
+            define.next(this, function () {
+                while (base.next()) {
+                    if (predicate.call(base.current,base.current)) {
+                        _current = base.current;
+                        return true;
+                    }
+                }
+                return false;
+            });
+            define.current(this,function(){return _current;});
+            define.unknownLength(this);
+            define.reset(this,function(){
+                base.reset();
+            });
+            define.clone(this,function(){
+                return new FilteringEnumerator(base.clone(),predicate);
+            });
         };
     
-    var seq = function() {
-        
-        var $this = this,
-            index = -1;
-        Object.defineProperty(this,"index",{
-            enumerable : false,
-            configurable : false,
-            value : function(val){
-                if(arguments.length === 1) { index = val; }
-                return index;
-                }
+    var seq = function(enumerator) {
+        if (!enumerator) { throw new Error("No enumerator supplied");}
+        var eachCached = false,
+            _length = 0;
+        defineProperty(this,"createSequence", function() {
+            var ctor = arguments[0],
+                en = this.getEnumerator(),
+                newEnumerator;
+                
+            switch (arguments.length-1) {
+                case 0:
+                    newEnumerator = new ctor(en);
+                    break;
+                case 1:
+                    newEnumerator = new ctor(en, arguments[1]);
+                    break;
+                case 2:
+                    newEnumerator = new ctor(en, arguments[1],arguments[2]);
+                    break;
+                case 3:
+                    newEnumerator = new ctor(en, arguments[1],arguments[2],arguments[3]);
+                    break;
+            }
+            return new seq(newEnumerator);
         });
-        this.current = function(){
-            return arr[this.index()];
-        };
-
-        this.reset = function(){
-            this.index(-1);
-        };
-        this.index(-1);
-        
-        this.next = function(){
-                $this.index($this.index()+1);
-                return $this.index() < arr.length;
-        };
-        this.where = function (predicate) {
-            var res = FilteredQuery(this);
-            res.prototype = this;
-            return new res(predicate);
-        };
-        this.select = function (projection) {
-            var res = ProjectedQuery(this);
-            return new res(projection);
-        };
-        this.selectMany = function (localProjection, elementProjection) {
-            return this.concatenate(localProjection, elementProjection);
-        };
-        this.iterate = function (p) {
-            var current
-            this.reset();
-            while (this.next()) {
-                current = this.current();
+        definePublicProperty(this,"getEnumerator",function(){return enumerator.clone();});
+        definePublicProperty(this,"where", function (predicate) {
+            return this.createSequence(FilteringEnumerator,predicate);
+        });
+        definePublicProperty(this,"select", function (projection) {
+            return this.createSequence(ProjectingEnumerator,projection);
+        });
+        definePublicProperty(this,"iterate", function (p) {
+            var current, enumerator = this.getEnumerator();
+            while (enumerator.next()) {
+                current = enumerator.current;
                 p.call(current,current);
             }
             return this;
-        };
+        });
         var comparer = function(comp){
             return function (p) {
                 var projection = p || idProjection,
@@ -93,34 +129,34 @@ var Tree, Query = function (arr) {
         this.min = comparer(function (a,b) {
             return a < b;
         });
-        this.each = function (p) {
-            var projection = p || idProjection,
-                res = [],
-                projected;
-            if (this.__values__) {
-                if (this.__values__[p]) {
-                    return this.__values__[p];
+        define.length(this,function(){
+                if (!eachCached) {
+                     this.each();
                 }
+                return _length;
+        })
+        definePublicProperty(this,"each", function (p) {
+            var res;
+            if (p) {
+                 res = this.select(p).each();
             } else {
-                this.__values__ = {};
+                 if (!eachCached) {
+                     enumerator.reset();
+                     while (enumerator.next()) {
+                         this[_length] = enumerator.current;
+                         _length++;
+                     }
+                     eachCached = true;
+                 }
+                 res = this;
             }
-            this.reset();
-            while (this.next()) {
-                projected = projection.call(this.current());
-                res.push(projected);
-            }
-            return this.__values__[p] = res;
-        };
-        this.skip = function (count) {
-            this.reset();
-            var res = SkipQuery(this, function (i) {
-                index = i;
-            });
-            return new res(count);
-        };
+            return res;
+        });
+        definePublicProperty(this, "skip",  function (count) {
+            return this.createSequence(SkipQuery,count);
+        });
         this.take = function (count) {
-            var res = TakeQuery(this);
-            return new res(count);
+            return this.createSequence(TakeEnumerator, count);
         };
         this.sum = function (projection) {
             var sum = 0,
@@ -132,7 +168,7 @@ var Tree, Query = function (arr) {
         };
         this.product = function (projection) {
             var seq = projection ? this.select(projection) : this;
-            this.reset();
+            
             if (!this.any()) return 0;
             return seq.aggregate(function (prod) {
                 return prod * this;
@@ -140,9 +176,9 @@ var Tree, Query = function (arr) {
         };
         this.aggregate = function (folder, seed) {
             var state = seed;
-            this.reset();
-            while (this.next()) {
-                var current = this.current();
+            enumerator.reset();
+            while (enumerator.next()) {
+                var current = enumerator.current;
                 state = folder.call(current, state, current);
             }
             return state;
@@ -150,62 +186,61 @@ var Tree, Query = function (arr) {
         this.average = function (p) {
             var count = 0,
                 sum = 0,
-                _this = p ? this.select(p) : this;
+                enumerator = (p ? this.select(p) : this).getEnumerator();
 
-
-            _this.reset();
-            if (!_this.next()) return undefined;
+            if (!enumerator.next()) return undefined;
             do {
                 count++;
-                sum += _this.current();
+                sum += enumerator.current;
             }
-            while (_this.next());
+            while (enumerator.next());
             return sum / count;
         };
-        this.concatenate = function (localProjection, elementProjection) {
-            var res = ConcatenationQuery(this);
-            if (arguments.length === 0) {
-                return new res();
-            } else if (arguments.length === 1 || (arguments.length === 2 && !elementProjection)) {
-                return new res(localProjection);
-            } else {
-                return new res(localProjection, elementProjection);
-            }
-        };
+        definePublicProperty(this,"concatenate", function (other) {
+            if (arguments.length === 0) return this;
+            if (!other.any()) return this;
+            if (!this.any()) return other;
+            
+            return this.createSequence(ConcatenationEnumerator, other.getEnumerator());
+        });
         this.groupBy = function (keySelector, valueSelector) {
             var res = {},
                 key,
-                keys = this.select(keySelector).each(),
-                values = valueSelector ? this.select(valueSelector || idProjection) : this;
+                index,
+                keysEnumerator = this.select(keySelector).getEnumerator(),
+                valuesEnumerator = (valueSelector ?
+                                    this.select(valueSelector)
+                                    : this.select(idProjection)).getEnumerator();
 
-            keys.reset();
-            values.reset();
-            while (keys.next()) {
-                if (values.next()) {
-                    key = keys.current();
-
+            while (keysEnumerator.next() && valuesEnumerator.next()) {
+                    key = keysEnumerator.current;
                     if (!res.hasOwnProperty(key)) {
                         res[key] = [];
                     }
-                    res[key].push(values.current());
-                }
+                    res[key].push(valuesEnumerator.current);
             }
-            return KeyValueQuery(res)();
+            
+            var seq = this.createSequence(function(temp,res){return new KeyValueEnumerator(res);}, res);
+            var prop;
+            for(prop in res){
+                    if(res.hasOwnProperty(prop)
+                       && !seq.hasOwnProperty(prop)){
+                        seq[prop] = res[prop];
+                    }
+            }
+            return seq;
         };
-        this.orderBy = function (projection) {
-            var res = OrderedQuery(this, projection);
-            return new res();
-        };
-        this.count = function (p) {
-            var count = 0, predicate = p || function (e) {
+        definePublicProperty(this, "orderBy", function (projection) {
+            return this.createSequence(OrderedEnumerator, projection);
+        });
+        definePublicProperty(this,"count", function (p) {
+            var count = 0,
+                predicate = p || function (e) {
                     return e !== undefined;
                 };
-            this.reset();
-            while (this.next()) {
-                count += predicate(this.current()) ? 1 : 0;
-            }
-            return count;
-        };
+            
+            return this.select(predicate).length;
+        });
         this.distinct = function (getter) {
             var keys = {};
             getter = getter || (function () {
@@ -220,41 +255,45 @@ var Tree, Query = function (arr) {
                 return false;
             });
         };
-        this.reverse = function () {
-            return this.each().reverse();
-        };
+        definePublicProperty(this,"reverse", function () {
+            return this.aggregate(function(st){st.push(this); return st;},[]).reverse();
+        });
         this.lastOrDefault = function (predicate, def) {
-            var seqAndDef = getSequqneceAndDefault(seq, predicate, def),
-                _this = seqAndDef._this,
-                c = seqAndDef.def;
-
-            _this.reset();
-
-            if (!_this.next()) {
-                return c;
+            var p = arguments.length == 2
+                    || typeof predicate === 'function' ? predicate : undefined,
+                enumerator = (p ? this.where(p) : this).getEnumerator(),
+                c;
+            def = def || predicate;
+            enumerator.reset();
+            if (def === undefined) {
+                throw new Error("Must supply a default");
             }
-            c = _this.current();
 
+            if (!enumerator.next()) {
+                return def;
+            }
+            c = enumerator.current;
+            
             while (true) {
-                if (_this.next()) {
-                    c = _this.current();
+                if (enumerator.next()) {
+                    c = enumerator.current;
                 } else {
                     return c;
                 }
             }
         };
-        this.last = function (predicate) {
+        definePublicProperty(this,"last", function (predicate) {
             var res = predicate ? this.lastOrDefault(predicate, undef) : this.lastOrDefault(undef);
 
             if (res === undef) throw new Error(this.last.throws.empty);
             return res;
-        };
+        });
         this.singleOrDefault = function (predicate, def) {
             var _this = typeof predicate === "function" ? this.where(predicate) : this,
                 res = _this.firstOrDefault(predicate, undef);
             def = (typeof predicate === "function" ? def : predicate) || null;
             if (res === undef) return def;
-            _this.reset();
+
             if (_this.skip(1).any()) throw new Error(this.single.throws.tooMany);
 
             return res;
@@ -262,16 +301,16 @@ var Tree, Query = function (arr) {
         this.single = function (predicate) {
             var res = predicate ? this.singleOrDefault(predicate, undef) : this.singleOrDefault(undef);
 
-            if (res === undef) throw new Error(this.single.throws.empty);
+            if (res === undef) throw new Error("sequence is empty");
             return res;
         };
         this.first = function (predicate) {
-            var _this;
-            this.reset();
-
-            _this = typeof predicate === "function" ? this.where(predicate) : this;
-            if (_this.next()) {
-                return _this.current();
+            var enumerator = (typeof predicate === "function"
+                              ? this.where(predicate)
+                              : this).getEnumerator();
+            
+            if (enumerator.next()) {
+                return enumerator.current;
             } else {
                 throw new Error(this.first.throws.empty);
             }
@@ -294,299 +333,275 @@ var Tree, Query = function (arr) {
         };
         this.takeWhile = function (predicate) {
             if (arguments.length === 0 || !(typeof predicate === "function" || typeof predicate === "string")) throw new Error(this.all.throws.noPredicate);
-            var res = TakeWhileQuery(this);
-            return new res(predicate);
+            return this.createSequence(TakeWhileEnumerator,predicate);
         };
-        this.all = function (predicate,state) {
+        definePublicProperty(this,"all", function (predicate,state) {  
             if (typeof predicate === "string") {
                 predicate = function(){return this[predicate];};
             }
-            if (arguments.length === 0 || typeof predicate !== "function") throw new Error(this.all.throws.noPredicate);
-            this.reset();
+            if (arguments.length === 0 || typeof predicate !== "function") throw new Error("No predicate provided");
+
             state = state || true;
-            while (this.next()) {
-                state = predicate.call(this.current(),state);
+            while (enumerator.next()) {
+                state = predicate.call(enumerator.current,state);
                 if (!state) return false;
             }
             return true;
-        };
+        });
         this.permutations = function () {
             var res = PermutationQuery(this);
             return new res();
         };
     };
-    seq =  new seq();
-    seq.single.throws = {
-        empty   : "Query is empty",
-        tooMany : "Expecting only one element"
-    };
-    seq.singleOrDefault.throws = {
-        tooMany : seq.single.throws.tooMany
-    };
-    seq.first.throws = {
-        empty : seq.single.throws.empty
-    };
-    seq.last.throws = seq.first.throws;
-    seq.all.throws = {
-        noPredicate : "No predicate specified"
-    };
-    return seq;
+    var en = arr.clone && arr.reset ? arr : new ArrayEnumerator(arr);
+    return new seq(en);
+};
+
+var ArrayEnumerator = function(array){
+    var _index = -1,
+        _current;
+        
+    define.next(this, function(){
+        _index++;
+        _current = array[_index];
+        return _index < array.length;
+    });
+    
+    define.current(this, function(){ return _current; });
+    define.length(this, function(){ return array.length; });
+    define.reset(this,function(){
+        _index = -1;
+    });
+    define.clone(this,function(){
+        return new ArrayEnumerator(array);
+    })
 },
-RangeQuery = function (start, count, step) {
+RangeEnumerator = function (start, count, step) {
     "use strict";
     step = step || 1;
-    var ctor = function () {
-            var current, c;
+    count = count || null; //we don't won't undefined here
+    var c;
+    define.reset(this, function () {
+        c = -1;
+        _current = start - step;
+    });
 
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.reset = function () {
-                current = start - step;
-                c = count || 0;
-            };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.next = count ?
-                function () {
-                    current += step;
-                    c -= count ? 1 : 0;
-                    return c >= 0;
-                } : function () {
-                    current += step;
-                    return true;
-                };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.current = function () {
-                return current;
-            };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.setIndex = function (i) {
-                if (!count && i >= count) return false;
-                current += step * i + start;
-                c = count ? count - i : count;
-		        return true;
-            };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.skip = function (count) {
-                var res = SkipQuery(this, function (i) {
-                    c -= i;
-                    current += step * i + start;
-                });
-                return new res(count);
-            };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.reset();
-        };
+    define.next(this, function () {
+            c++;
+            _current += step;
+            return (!count || count > c);
+        });
+    define.current(this, function(){return _current;});
+    define.length(this, function(){ return count; });
+},
+TakeEnumerator = function (base,count) {
+    "use strict";
 
-    ctor.prototype = new Query();
-    return ctor;
-},
-TakeQuery = function (_this) {
-    "use strict";
-    var base = _this,
-        TakeQuery =
-        function (count) {
-            var c = count;
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.next = function () {
-                return (base.next() && c--);
-            };
-            //noinspection JSPotentiallyInvalidUsageOfThis
-            this.reset = function () {
-                base.reset();
-                c = count;
-            };
-        };
-    TakeQuery.prototype = base;
-    return TakeQuery;
-},
-ProjectedQuery = (function (_this) {
-    "use strict";
-        var base = _this,
-            ProjectingQuery = function (p) {
-                p = p || idProjection;
-                var projection = typeof p === "function" 
-                                 ? p
-                                 : function(){ return this[p];};
-                this.current = function () {
-                    var current = base.current();
-                    return projection.call(current,current);
-                };
-            };
-        ProjectingQuery.prototype = base;
-        return ProjectingQuery;
-}),
-ConcatenationQuery = (function(_this){
-    "use strict";
-    var base = _this,
-        ConcatenationQuery = function(localProjection, elementProjection){
-           var sequences,sequence;
-           if(arguments.length === 1){
-               elementProjection = localProjection;
-               localProjection = undefined;
-           }
-           sequences = localProjection  ? base.select(localProjection) : base;
-           if(!sequences.next()){
-               return Query([]);
-           }
-           this.reset = function(){
-                sequences.reset();
-                sequences.next();
-                sequence = sequences.current();
-                sequence.reset();
-                sequence = elementProjection ? sequence.select(elementProjection) : sequence;
-           };
-           this.next = function(){
-               while(!sequence || !sequence.next()) {
-                   if(sequences.next()){
-                       sequence = sequences.current();
-                       sequence.reset();
-                       sequence = elementProjection ? sequence.select(elementProjection) : sequence;
-                   } else {
-                       return false;
-                   }
-           }
-           return true;
-        };
-        this.current = function(){
-            return sequence.current();
-        };
-    };
-    ConcatenationQuery.prototype = base;
-    return ConcatenationQuery;
-}),
-TakeWhileQuery = (function (_this) {
-    "use strict";
-        var base = _this,
-            TakeWhileQuery = function (predicate) {
-                this.next = function () {
-                    var current;
-                    if(base.next()) {
-                        current = base.current();
-                        return predicate.call(current,current);
-                    } else {
-                        return false;
-                    }
-                };
-            };
-        TakeWhileQuery.prototype = base;
-        return TakeWhileQuery;
-}),
-OrderedQuery = (function(seq, projection){
-    "use strict";
-        if(Tree === undefined) {
-            Tree = require("functional-red-black-tree");
-        }
-        var tree = Tree(),
-        current;
-        seq = projection ? seq.select(function(){ return {key : projection.call(this), value : this};})
-                         : seq.select(function(){ return {key : this,             value : this};});
+    var c = count,
+        _current;
         
-        while(seq.next()){
-            current = seq.current();
+    define.next(this, function () {
+        var n;
+        c--;
+        n = c >= 0 && base.next();
+        _current = n ? base.current : undefined;
+        return n;
+    });
+    
+    define.reset(this, function () {
+        base.reset();
+        c = count;
+        _current = undefined;
+    });
+    define.current(this, function(){ return base.current; });
+    define.clone(this,function(){ return new TakeEnumerator(base.clone(),count);});
+    if (base.length) {
+        define.length(this,function(){return Math.max(count, base.length); });
+    } else{
+        define.unknownLength(this);
+    }
+},
+ProjectingEnumerator = function (base, p) {
+    "use strict";
+    var _current;
+    p = p || idProjection;
+    var projection = typeof p === "function" 
+                     ? p
+                     : function(){ return this[p];};
+    define.current(this,function () { return _current; });
+    define.next(this,function(){
+            if(base.next()){
+                _current = base.current;
+                _current = projection.call(_current,_current);
+                return true;
+            }
+            return false;
+    });
+    define.length(this,function(){return base.length;});
+    define.clone(this,function(){return new ProjectingEnumerator(base.clone(),projection);});
+    define.reset(this,function(){
+        base.reset();
+    });
+},
+ConcatenationEnumerator = function(first, second){
+    "use strict";
+    var enumerator = first,
+        _current;
+               
+    define.reset(this, function(){
+         first.reset();
+         second.reset();
+    });
+    
+    define.next(this, function(){
+          if(enumerator.next()){
+                _current = enumerator.current;
+          } else if(enumerator === first){
+                enumerator = second;
+                return this.next();
+          } else {
+                _current = undefined;
+                return false;
+          }
+          return true;  
+    });
+    
+    define.current(this,function(){ return _current; });
+    define.clone(this,function(){
+        new ConcatenationEnumerator(first.clone(),second.clone());
+    })
+    
+    if (first.length !== undefined && second.length !== undefined) {
+        define.length(this,
+            (first.length === null || second.length === null) ?
+              function(){ return null; }
+              : function(){ return first.length + second.length; }
+        );
+    } else{
+        define.length(this,function(){return undefined;});
+    }
+},
+TakeWhileEnumerator = function (enumerator,predicate) {
+    "use strict";
+    define.next(this, function () {
+        var current;
+        if(enumerator && enumerator.next()) {
+            current = enumerator.current;
+            return predicate.call(current,current);
+        } else {
+            enumerator = undefined;
+            return false;
+        }
+    });
+    
+    define.reset(this,function(){
+        enumerator.reset();
+    });
+    define.clone(this,function(){return new TakeWhileEnumerator(enumerator.clone(),predicate);});   
+    define.unknownLength(this);
+    define.current(this,function(){
+        return enumerator.current;
+    })
+},
+OrderedEnumerator = function(en, projection){
+    "use strict";
+    if(Tree === undefined) {
+        Tree = require("functional-red-black-tree");
+    }
+    en.next();
+    
+    var tree = Tree(),
+        keys,
+        current,
+        seq = new Query(en).select(projection ? projection : function(){
+                return {key : this, value : this};});
+        en = seq.getEnumerator();
+        while(en.next()){
+            current = en.current;
             tree = tree.insert(current.key,current.value);
         }
-        var base = Query(tree.keys),
-            SortedKeyQuery = function(){
-                this.current = function(){
-                    return tree.get(base.current());
-                };
-            };
-        SortedKeyQuery.prototype = base;
-        return SortedKeyQuery;
-}),
-KeyValueQuery = (function (obj) {
-    "use strict";
-        var base = Query(obj.keys()),
-            KeyValueQuery = function () {
-                this.current = function () {
-                    var key = base.current();
-                    return { key : key, value: obj[key]};
-                };
-            };
-        KeyValueQuery.prototype = base;
-        return function(){
-            var res = new KeyValueQuery(),prop;
-            for(prop in obj){
-                    if(obj.hasOwnProperty(prop)
-                       && !res.hasOwnProperty(prop)){
-                        res[prop] = obj[prop];
-                    }
+        
+        keys = new ArrayEnumerator(tree.keys);
+
+    var ctor = function(en){
+        var _current;
+        define.current(this, function(){
+            return _current;
+        });
+        
+        define.next(this,function(){
+            var n = keys.next();
+            if (n) {
+                _current = tree.get(keys.current);
+            } else {
+                _current = undefined;
             }
-            return res;
-        };
-    }),
+            return n;
+        });
+        
+        define.reset(this,function(){
+            keys.reset();
+        });
+        
+        define.length(this,function(){
+            return keys.length;
+        });
+        
+        define.clone(this,function(){return new ctor(en.clone());});    
+    };
+    return new ctor(keys);
+},
+KeyValueEnumerator = function (obj) {
+    "use strict";
+    var keys = new ArrayEnumerator(obj.keys),
+        _current;
+    define.next(this, function () {
+        if (keys.next()) {
+            var key = keys.current;
+            _current = { key : key, value: obj[key]};
+            return true;
+        }
+        _current = undefined;
+        return false;
+    });
+    define.current(this,function(){return _current;});
+    define.clone(this,function(){return new KeyValueEnumerator(obj)});
+    define.reset(this,function(){keys.reset();});
+    define.length(this,function(){return keys.length;});
+},
 PermutationQuery = (function (_this) {
     "use strict";
     var base = _this,
+        index,
         permutationQuery = function () {
-            var head,
-                tail,
-                onlyHead,
-                array;
-
-            if (base.any()) {
-                this.reset = function () {
-                    array = base.select(function(){return this;}).each();
-                    head = [array.shift()];
-                    if (array.length) {
-                        tail = array.permutations();
-                        onlyHead = false;
-                    } else {
-                        onlyHead = true;
-                    }
-                };
-                this.reset();
-                if (onlyHead) {
-                    console.log("only head", head);
-                    this.next = function() {
-                        var res = onlyHead;
-                        if(!onlyHead){
-                            head = undefined;
-                        }
-                        onlyHead = false;
-                        return res;
-                    };
-                    
-                    this.current = function(){
-                        return head;
-                    }
-                } else {
-                    console.log("got tail", array);
-                    this.next = function(){
-                        return tail.next();
-                    }
-                    this.current = function(){
-                        console.log("head", head, "tail", tail.current().each())
-                        return head.concatenate(tail.current());
-                    }
-                }
-            } else {
-                throw new Error("Query is empty")
-            }
             
         };
-    permutationQuery.prototype = base;
+    permutationQuery.prototype = new Query([]);
     return permutationQuery;
 }),
-SkipQuery = (function (_this) {
+SkipQuery = function (base,count) {
     "use strict";
-        var base = _this,
-            SkipQuery = function (count) {
-                var c;
-                this.reset = function () {
-                    c = count;
-                };
-
-                this.next = function() {
-                    for (; c > 0; c--) {
-                        if (!base.next()) return false;
-                    }
-                    return base.next();
-                };
-                this.reset();
-            };
-        SkipQuery.prototype = base;
-        return SkipQuery;
-    });
+    var _length = base.length ? Math.max(base.length - count,0) : base.length,
+        empty = false;
+        define.reset(this, function () {
+            var c = count;
+            if (empty) { return; }
+            base.reset();
+            for (; c > 0; c--) {
+                if(!base.next()){
+                    empty = true;
+                    break;
+                }
+            }
+        });
+        this.reset();
+        
+        define.next(this, empty ? function() { return false; }
+                                : function() { return base.next(); });
+        define.current(this,function(){return base.current; });
+        define.length(this, function(){ return _length; });
+        define.clone(this, function(){ return new SkipQuery(base.clone(),count); });
+};
 Query.patch = function (proto) {
     "use strict";
     var f, it = new Query([]);
@@ -621,26 +636,22 @@ Query.range = function (start, count, step) {
 Query.patch(Array.prototype);
 Query.generate = function(generator, seed){
     "use strict";
-    var arr = [],
-        QueryGenerator = (function (_this) {
-	    var sg = function (generator) {
+    var QueryEnumerator = function () {
+	    var sg = function () {
     		var _current = seed;
-    		this.next = function(){
+    		define.next(this,function(){
     		      _current = generator(_current);
-    		      arr.push(_current);
-    		      return _current && true;
-    		};
-    		this.current = function () {
-    		    return _current;
-    		};
+    		      return true;
+    		});
+    		define.current(this, function () { return _current; });
+            define.length(this,function(){ return null; });
+            define.reset(this,function(){ _current = seed; });
 	    };
-	    sg.prototype = _this;
-	    return sg;
-    })(new Query(arr));
-    return new QueryGenerator(generator);
+    }
+    return new QueryEnumerator();
 };
 if(!Object.prototype.keys) {
-    Object.prototype.keys = function () {
+    defineGetter(Object.prototype,"keys", function () {
         var res = [];
         for (var prop in this) {
             if (this.hasOwnProperty(prop)) {
@@ -648,6 +659,6 @@ if(!Object.prototype.keys) {
             }
         }
         return res;
-    };
+    });
 }
 module.exports = function(arr){ return Query(arr);};

@@ -19,7 +19,7 @@ var Query = require("./../query.js"),
         });
         
         it("No predicate",function(){
-            expect(function(){emptyQuery.all()}).to.throw(emptyQuery.all.throws.noPredicate);
+            expect(function(){emptyQuery.all()}).to.throw();
         });
     
         it("One and only",function(){

@@ -4,11 +4,12 @@ var Query = require("./../query.js"),
     expect = require("chai").expect,
     isOdd = function(){return this % 2;},
     getIndex = function(){return this.index;},
-    getValue = function(){return this.value;};
-
+    getValue = function(){return this.value;},
+    emptyQuery = new Query([]);
+    
 describe("Query",function(){
     "use strict";
-    var emptyQuery = Query([]);
+    
     describe("count",function(){
         it("Counting nothing",function(){
             expect(emptyQuery.count()).to.equal(0);
@@ -81,20 +82,6 @@ describe("Query",function(){
         });
     });
     
-    describe("last",function(){
-        it("Should throw on empty",function(){
-            expect(function(){emptyQuery.last()}).to.throw(emptyQuery.last.empty);
-        });
-    
-        it("One and only",function(){
-            expect(Query([1]).last()).to.equal(1);
-        });
-    
-        it("many more",function(){
-            expect(Query([2,1,3]).last()).to.equal(3);
-        });
-    });
-    
     describe("each",function(){
         it("empty",function(){
             var arr = [],
@@ -141,22 +128,6 @@ describe("Query",function(){
             }
         })
     });
-     
-    describe("orderBy",function(){
-        it("simple",function(){
-            
-            var arr = [1,2,5,3,4],
-                res = Query(arr).orderBy();
-
-            res = res.each();
-
-            expect(res[0]).to.equal(arr[0]);
-            expect(res[1]).to.equal(arr[1]);
-            expect(res[2]).to.equal(arr[3]);
-            expect(res[3]).to.equal(arr[4]);
-            expect(res[4]).to.equal(arr[2]);
-        });
-    });
     
     describe("singleOrDefault",function(){
         
@@ -177,7 +148,7 @@ describe("Query",function(){
         it("more than one",function(){
             var verify = function(arr,predicate){
                 var seq =new Query(arr);
-                   expect(function(){seq.singleOrDefault(predicate)}).to.throw(seq.singleOrDefault.throws.tooMany);
+                   expect(function(){seq.singleOrDefault(predicate)}).to.throw();
             };
             verify([1,2]);
             verify([1,2,3],isOdd);
@@ -192,66 +163,23 @@ describe("Query",function(){
     });
     
     describe("single",function(){
-        var verify = function(seq,message,predicate){
-               var f = arguments.length > 2 ? function(){seq.single(predicate)} : function(){seq.single()};
-                expect(f).to.throw(message);
+        var verify = function(seq,predicate){
+               var f = arguments.length > 1 ? function(){seq.single(predicate)} : function(){seq.single()};
+                expect(f).to.throw();
             };
         it("empty",function(){
-            var seq = emptyQuery,
-                errMsg = seq.single.throws.empty;
+            var seq = emptyQuery;
                 
-            verify(seq,errMsg);
-            verify(seq,errMsg,isOdd);
-            verify(Query([2]),errMsg,isOdd);
+            verify(seq);
+            verify(seq,isOdd);
+            verify(Query([2]),isOdd);
         });
         it("Too many",function(){
-            var seq = Query([1,2,3]),
-                errMsg = seq.single.throws.tooMany;
+            var seq = Query([1,2,3]);
                 
-            verify(seq,errMsg);
-            verify(seq,errMsg,isOdd);
+            verify(seq);
+            verify(seq,isOdd);
         }) 
-    });
-    
-    describe("groupBy",function(){
-        it("all same key",function(){
-            var arr = [{index : "a",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
-                seq = Query(arr),
-                res = seq.groupBy(function(){ return this.index});
-            expect(res.a.length).to.equal(arr.length);
-            expect(res.a[1].value).to.equal(1);
-        });
-        
-        it("more keys",function(){
-            var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
-                seq = Query(arr),
-                res = seq.groupBy(function(){ return this.index});
-            expect(res.a.length).to.equal(arr.length - res.b.length);
-            expect(res.b[0].value).to.equal(0);
-            expect(res.a[0].value).to.equal(1);
-        });
-        
-        
-        it("custom value",function(){
-            var arr = [{index : "b",value : 0},{index : "a",value : 1},{index : "a",value : 2}],
-                seq = Query(arr),
-                res = seq.groupBy(function(){ return this.index}, getValue),
-                a = res.a.sum(),
-                b = res.b.sum(),
-                sum = arr.sum(getValue);
-                
-            expect(a).to.equal(3);
-            expect(sum - a).to.equal(b);
-        });
-        
-        it("As Query",function(){
-            var arr = [{index : "b",value : 5},{index : "a",value : 1},{index : "a",value : 2}],
-                seq = Query(arr),
-                res = seq.groupBy(function(){ return this.index});
-            expect(res.single(function(){return this.key ==="b";}).value.single().value).to.equal(5);
-            expect(res.select(function(){return this.value.sum(getValue);}).sum()).to.equal(8);
-            expect(res.where(function(){return this.key === "a";}).select(function(kv){return kv.value.sum(getValue);}).sum()).to.equal(3);
-        });
     });
     
      describe("product",function(){
@@ -282,26 +210,10 @@ describe("Query",function(){
             expect([{value :1 } ,{value : 2 } ,{value : 3 } ,{value : 4 } ,{value : 5}].sum("value")).to.equal(15);
         });
      });
-     
-     describe("take", function(){
-         it("empty", function(){
-             expect(emptyQuery.take(1).count()).to.equal(0);
-         });
-         it("taken more than we have", function(){
-             var arr =[1,2,3,4,5], 
-                 res = arr.take(10);
-             expect(res.count()).to.equal(5);
-         });
-         
-         it("taken less than we have", function(){
-             var arr =[1,2,3,4,5];
-             expect(arr.skip(1).take(1).single()).to.equal(arr[1]);
-         });
-     });
           
        describe("max", function(){
          it("empty", function(){
-             expect(function(){emptyQuery.max()}).to.throw(emptyQuery.first.throws.empty);
+             expect(function(){emptyQuery.max()}).to.throw();
          });
          
          it("one", function(){
@@ -334,34 +246,4 @@ describe("Query",function(){
              expect([{val: 3} ,{val:4},{val: 5} ].average("val")).to.equal(4);
          });
        });
-       
-        describe("concatenate", function(){
-         it("empty",function(){
-             expect(emptyQuery.concatenate().any()).to.equal(false);
-         });
-         
-         it("Two queries in an array", function(){
-             var res = [new Query([3,4,5]),new Query([2])].concatenate().each();
-             expect(res.length).to.equal(4);
-         });
-         
-         it("Two arrays in an array", function(){
-             var res = [[3,4,5],[2]].concatenate().each();
-             expect(res.length).to.equal(4);
-             expect(res[0]).to.equal(3);
-             expect(res[1]).to.equal(4);
-             expect(res[2]).to.equal(5);
-             expect(res[3]).to.equal(2);
-         });
-         
-         it("Two queries", function(){
-             expect(new Query([new Query([3,4,5]),new Query([2])]).concatenate().count()).to.equal(4);
-         });
-         
-         it("One empty", function(){
-             expect(new Query([new Query([3,4,5]),new Query([])]).concatenate().count()).to.equal(3);
-         });
-       });
-
-
 });

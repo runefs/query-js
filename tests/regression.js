@@ -26,14 +26,14 @@ describe("Regression tests",function(){
                      });
                 var map = filtered.groupBy(function(){
                                         return this.orderBy()
-                                                     .each()
+                                                     .aggregate(function(st){st.push(this); return st;},[])
                                                      .toString()
                                                      .replace(/,/g,'');
                                       },function(){
                                         return this.toString()
                                                    .replace(/,/g,'');
-                                      });
-            
+                                       });
+                console.log(map);
             expect(map.ailss.length).to.equal(2);
             expect(map.cop).to.equal(undefined);
             expect(map.aails).to.equal(undefined);
@@ -41,5 +41,79 @@ describe("Regression tests",function(){
             expect(map.loop.length).to.equal(1);
         });
     });
-});
+    
+    var seq = [{key : 0, value : "a"},
+                       {key : 1, value : "b"},
+                       {key : 2, value : "c"},
+                       {key : 3, value : "d"}];
+          
+     var test = function(first,second,f){
+        var res = [];
+        first = first.getEnumerator();
+        second = second.getEnumerator();
+        while(first.next()  && second.next()){
+                f(first,second,res);
+            }
 
+            expect(seq.length).to.equal(res.length);
+            for(var i = 0; i < seq.length; i++){
+                expect(seq[i].key).to.equal(res[i].key);
+                expect(seq[i].value).to.equal(res[i].value);
+            }
+     };
+     
+     describe("multiple usage",function(){
+        it("double select",function(){
+            var keys = seq.select(function(){ return this.key; }),
+                values = seq.select(function(){ return this.value; });
+                
+            test(keys, values, function(first,second,res){
+                res.push({
+                    key   : first.current,
+                    value : second.current
+                });
+              });
+        });
+     
+       it("where we select equally",function(){
+           var keys = seq.select(function(){ return this.key; }),
+               values = seq.where(function(){ return this.key < 4;} );
+               
+           test(keys, values, function(first,second,res){
+              res.push({
+                  key   : first.current,
+                  value : second.current.value
+              });
+          });
+       });
+           
+       
+       it("select and filter",function(){
+              var seq = [{key : 0, value : "a"},
+                         {key : 1, value : "b"},
+                         {key : 2, value : "c"},
+                         {key : 3, value : "d"}],
+                  keys = seq.select(function(){ return this.key; }),
+                  values = seq.where(function(){ return this.key < 4;} );
+               
+           test(keys, values, function(first,second,res){
+              res.push({
+                  key   : first.current,
+                  value : second.current.value
+              });
+          });
+       });
+       
+       it("lots of wheres",function(){
+              var low  = seq.where(function(){ return this.key <= 3; }),
+                  high = seq.where(function(){ return this.value >= 'a'; });
+               
+           test(low, high, function(first,second,res){
+              res.push({
+                  key   : first.current.key,
+                  value : second.current.value
+              });
+           });
+       });
+   });
+});

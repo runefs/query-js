@@ -8,7 +8,7 @@ var Query = require("./../query.js"),
      describe("min", function(){
         "use strict";
          it("empty", function(){
-             expect(function(){emptyQuery.min()}).to.throw(emptyQuery.first.throws.empty);
+             expect(function(){emptyQuery.min()}).to.throw();
          });
          
          it("one", function(){
